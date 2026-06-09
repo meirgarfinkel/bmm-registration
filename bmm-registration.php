@@ -18,6 +18,27 @@ define( 'BMM_REG_FILE', __FILE__ );
 define( 'BMM_REG_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BMM_REG_URL', plugin_dir_url( __FILE__ ) );
 
+// Load all classes upfront so they are available for the activation hook,
+// which fires before plugins_loaded.
+require_once BMM_REG_DIR . 'includes/class-bmm-settings.php';
+require_once BMM_REG_DIR . 'includes/class-bmm-form-config.php';
+require_once BMM_REG_DIR . 'includes/class-bmm-pricing.php';
+require_once BMM_REG_DIR . 'includes/class-bmm-submission.php';
+require_once BMM_REG_DIR . 'includes/class-bmm-callback-handler.php';
+require_once BMM_REG_DIR . 'includes/class-bmm-csv-export.php';
+require_once BMM_REG_DIR . 'includes/class-bmm-shortcode.php';
+require_once BMM_REG_DIR . 'includes/class-bmm-post-types.php';
+require_once BMM_REG_DIR . 'rest-api/class-bmm-rest-price.php';
+require_once BMM_REG_DIR . 'rest-api/class-bmm-rest-submit.php';
+require_once BMM_REG_DIR . 'rest-api/class-bmm-rest-callback.php';
+require_once BMM_REG_DIR . 'public/class-bmm-form-renderer.php';
+
+if ( is_admin() ) {
+	require_once BMM_REG_DIR . 'admin/class-bmm-admin.php';
+	require_once BMM_REG_DIR . 'admin/class-bmm-form-editor.php';
+	require_once BMM_REG_DIR . 'admin/class-bmm-submissions-list.php';
+}
+
 require_once BMM_REG_DIR . 'includes/class-bmm-plugin.php';
 
 register_activation_hook( __FILE__, [ 'BMM_Plugin', 'activate' ] );

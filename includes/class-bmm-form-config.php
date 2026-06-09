@@ -3,20 +3,20 @@ defined( 'ABSPATH' ) || exit;
 
 class BMM_Form_Config {
 
-	public readonly int    $post_id;
-	public readonly string $title;
-	public readonly string $slug;
-	public readonly string $status;
-	public readonly int    $membership_price;
-	public readonly int    $membership_included_men;
-	public readonly int    $membership_included_women;
-	public readonly int    $extra_seat_price;
-	public readonly array  $sponsorships;
-	public readonly string $payment_options;
-	public readonly int    $hk_months;
-	public readonly int    $ragil_tashlumim;
-	public readonly string $mosad;
-	public readonly string $api_valid;
+	public int    $post_id;
+	public string $title;
+	public string $slug;
+	public string $status;
+	public int    $membership_price;
+	public int    $membership_included_men;
+	public int    $membership_included_women;
+	public int    $extra_seat_price;
+	public array  $sponsorships;
+	public string $payment_options;
+	public int    $hk_months;
+	public int    $ragil_tashlumim;
+	public string $mosad;
+	public string $api_valid;
 
 	public static function default_sponsorships(): array {
 		return [

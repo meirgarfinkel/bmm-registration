@@ -13,30 +13,7 @@ class BMM_Plugin {
 	}
 
 	private function __construct() {
-		$this->load_dependencies();
 		$this->init_hooks();
-	}
-
-	private function load_dependencies(): void {
-		require_once BMM_REG_DIR . 'includes/class-bmm-post-types.php';
-		require_once BMM_REG_DIR . 'includes/class-bmm-settings.php';
-		require_once BMM_REG_DIR . 'includes/class-bmm-form-config.php';
-		require_once BMM_REG_DIR . 'includes/class-bmm-pricing.php';
-		require_once BMM_REG_DIR . 'includes/class-bmm-submission.php';
-		require_once BMM_REG_DIR . 'includes/class-bmm-callback-handler.php';
-		require_once BMM_REG_DIR . 'includes/class-bmm-csv-export.php';
-		require_once BMM_REG_DIR . 'includes/class-bmm-shortcode.php';
-		require_once BMM_REG_DIR . 'rest-api/class-bmm-rest-price.php';
-		require_once BMM_REG_DIR . 'rest-api/class-bmm-rest-submit.php';
-		require_once BMM_REG_DIR . 'rest-api/class-bmm-rest-callback.php';
-
-		if ( is_admin() ) {
-			require_once BMM_REG_DIR . 'admin/class-bmm-admin.php';
-			require_once BMM_REG_DIR . 'admin/class-bmm-form-editor.php';
-			require_once BMM_REG_DIR . 'admin/class-bmm-submissions-list.php';
-		}
-
-		require_once BMM_REG_DIR . 'public/class-bmm-form-renderer.php';
 	}
 
 	private function init_hooks(): void {
