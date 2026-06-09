@@ -8,6 +8,7 @@ class BMM_Form_Editor {
 		add_action( 'save_post_bmm_reg_form', [ self::class, 'save_meta' ], 10, 2 );
 		add_action( 'admin_head', [ self::class, 'inject_status_in_title' ] );
 		add_filter( 'post_updated_messages', [ self::class, 'custom_messages' ] );
+		add_filter( 'post_row_actions', [ self::class, 'add_preview_row_action' ], 10, 2 );
 	}
 
 	public static function add_meta_boxes(): void {
@@ -41,13 +42,30 @@ class BMM_Form_Editor {
 	}
 
 	public static function render_link_meta_box( \WP_Post $post ): void {
-		if ( $post->post_status === 'published' || $post->post_status === 'archived' ) {
-			$url = add_query_arg( 'bmm_form', $post->post_name, home_url( '/' ) );
+		$url = $post->post_name ? add_query_arg( 'bmm_form', $post->post_name, home_url( '/' ) ) : '';
+
+		if ( $post->post_status === 'published' ) {
 			echo '<p><a href="' . esc_url( $url ) . '" target="_blank">' . esc_html( $url ) . '</a></p>';
 			echo '<button type="button" class="button" onclick="navigator.clipboard.writeText(\'' . esc_js( $url ) . '\')">' . esc_html__( 'Copy Link', 'bmm-registration' ) . '</button>';
+		} elseif ( $post->post_status === 'draft' && $url ) {
+			echo '<p><a href="' . esc_url( $url ) . '" target="_blank">' . esc_html__( 'Preview (admin only)', 'bmm-registration' ) . '</a></p>';
+		} elseif ( $post->post_status === 'archived' ) {
+			echo '<p>' . esc_html__( 'This form is archived (closed to new registrations).', 'bmm-registration' ) . '</p>';
 		} else {
-			echo '<p>' . esc_html__( 'Publish the form to get a public link.', 'bmm-registration' ) . '</p>';
+			echo '<p>' . esc_html__( 'Save the form first to get a preview link.', 'bmm-registration' ) . '</p>';
 		}
+	}
+
+	public static function add_preview_row_action( array $actions, \WP_Post $post ): array {
+		if ( $post->post_type !== 'bmm_reg_form' || $post->post_status !== 'draft' ) {
+			return $actions;
+		}
+		if ( ! $post->post_name || ! current_user_can( 'manage_options' ) ) {
+			return $actions;
+		}
+		$url = add_query_arg( 'bmm_form', $post->post_name, home_url( '/' ) );
+		$actions['bmm_preview'] = '<a href="' . esc_url( $url ) . '" target="_blank">' . esc_html__( 'Preview', 'bmm-registration' ) . '</a>';
+		return $actions;
 	}
 
 	public static function save_meta( int $post_id, \WP_Post $post ): void {
