@@ -1,0 +1,394 @@
+/* BMM Registration — Public Form Styles */
+
+:root {
+	--bmm-primary:     #2c6fad;
+	--bmm-primary-dk:  #1e4f82;
+	--bmm-success:     #2a8a4a;
+	--bmm-error:       #c0392b;
+	--bmm-warning:     #e67e22;
+	--bmm-border:      #dde2e9;
+	--bmm-bg:          #f8fafd;
+	--bmm-text:        #1a1a2e;
+	--bmm-muted:       #6b7280;
+	--bmm-radius:      6px;
+	--bmm-gap:         1.25rem;
+}
+
+/* ── Wrapper ──────────────────────────────────────────────────────────────── */
+
+.bmm-registration-wrap {
+	max-width: 720px;
+	margin: 0 auto;
+	padding: 1.5rem 1rem;
+	font-family: inherit;
+	color: var(--bmm-text);
+}
+
+.bmm-form-title {
+	font-size: 1.6rem;
+	margin-bottom: 1.5rem;
+	text-align: center;
+}
+
+/* ── Step indicator ──────────────────────────────────────────────────────── */
+
+.bmm-steps {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 2rem;
+	position: relative;
+}
+
+.bmm-steps::before {
+	content: '';
+	position: absolute;
+	top: 1.1rem;
+	left: 0;
+	right: 0;
+	height: 2px;
+	background: var(--bmm-border);
+	z-index: 0;
+}
+
+.bmm-step {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	position: relative;
+	z-index: 1;
+	flex: 1;
+}
+
+.bmm-step__number {
+	width: 2.2rem;
+	height: 2.2rem;
+	border-radius: 50%;
+	background: #fff;
+	border: 2px solid var(--bmm-border);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 700;
+	font-size: 0.85rem;
+	transition: background 0.2s, border-color 0.2s;
+}
+
+.bmm-step__label {
+	font-size: 0.72rem;
+	color: var(--bmm-muted);
+	margin-top: 0.35rem;
+	text-align: center;
+}
+
+.bmm-step--active   .bmm-step__number { background: var(--bmm-primary); border-color: var(--bmm-primary); color: #fff; }
+.bmm-step--completed .bmm-step__number { background: var(--bmm-success); border-color: var(--bmm-success); color: #fff; }
+.bmm-step--active   .bmm-step__label  { color: var(--bmm-primary); font-weight: 600; }
+
+/* ── Form sections ───────────────────────────────────────────────────────── */
+
+.bmm-form-step { display: none; }
+.bmm-form-step:not([hidden]) { display: block; }
+
+.bmm-form-step h3 {
+	font-size: 1.2rem;
+	margin-bottom: 1.25rem;
+	padding-bottom: 0.5rem;
+	border-bottom: 2px solid var(--bmm-border);
+}
+
+/* ── Fields ──────────────────────────────────────────────────────────────── */
+
+.bmm-field {
+	margin-bottom: var(--bmm-gap);
+}
+
+.bmm-field-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--bmm-gap);
+}
+
+@media ( max-width: 520px ) {
+	.bmm-field-row { grid-template-columns: 1fr; }
+}
+
+.bmm-field label,
+.bmm-field > span {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 0.3rem;
+	font-size: 0.9rem;
+}
+
+.bmm-field input[type="text"],
+.bmm-field input[type="email"],
+.bmm-field input[type="tel"],
+.bmm-field input[type="number"],
+.bmm-field textarea {
+	width: 100%;
+	padding: 0.55rem 0.75rem;
+	border: 1px solid var(--bmm-border);
+	border-radius: var(--bmm-radius);
+	font-size: 1rem;
+	transition: border-color 0.15s;
+	box-sizing: border-box;
+}
+
+.bmm-field input:focus,
+.bmm-field textarea:focus {
+	outline: none;
+	border-color: var(--bmm-primary);
+	box-shadow: 0 0 0 3px rgba(44,111,173,.15);
+}
+
+.bmm-required { color: var(--bmm-error); }
+.bmm-optional { color: var(--bmm-muted); font-weight: 400; font-size: 0.85em; }
+
+/* ── Radio & checkbox ────────────────────────────────────────────────────── */
+
+.bmm-radio-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+
+.bmm-radio,
+.bmm-checkbox {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.6rem;
+	cursor: pointer;
+}
+
+.bmm-radio input,
+.bmm-checkbox input { margin-top: 0.2rem; flex-shrink: 0; }
+
+/* ── Membership ──────────────────────────────────────────────────────────── */
+
+.bmm-membership-field label {
+	font-size: 1rem;
+	font-weight: 700;
+}
+
+.bmm-membership-includes { margin-top: 0.35rem; margin-left: 1.6rem; }
+
+/* ── Seats ───────────────────────────────────────────────────────────────── */
+
+.bmm-seats-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 0.75rem;
+}
+
+.bmm-seats-header h4 { margin: 0; font-size: 1rem; }
+
+/* Toggle */
+.bmm-toggle {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	cursor: pointer;
+}
+
+.bmm-toggle__track {
+	position: relative;
+	width: 2.6rem;
+	height: 1.4rem;
+	background: var(--bmm-border);
+	border-radius: 999px;
+	transition: background 0.2s;
+}
+
+.bmm-toggle input:checked ~ .bmm-toggle__track { background: var(--bmm-primary); }
+
+.bmm-toggle__track::after {
+	content: '';
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 1rem;
+	height: 1rem;
+	border-radius: 50%;
+	background: #fff;
+	transition: transform 0.2s;
+}
+
+.bmm-toggle input:checked ~ .bmm-toggle__track::after { transform: translateX(1.2rem); }
+.bmm-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+.bmm-toggle__label { font-size: 0.9rem; font-weight: 600; }
+
+/* Seat grid */
+.bmm-seats-grid__header,
+.bmm-seat-row {
+	display: grid;
+	grid-template-columns: 2fr 1fr 1fr;
+	gap: 0.5rem;
+	align-items: center;
+	padding: 0.4rem 0;
+	border-bottom: 1px solid var(--bmm-border);
+}
+
+.bmm-seats-grid__header {
+	font-weight: 700;
+	font-size: 0.85rem;
+	color: var(--bmm-muted);
+	padding-bottom: 0.5rem;
+}
+
+.bmm-seat-input {
+	width: 100%;
+	padding: 0.4rem 0.5rem;
+	border: 1px solid var(--bmm-border);
+	border-radius: var(--bmm-radius);
+	font-size: 1rem;
+	text-align: center;
+	box-sizing: border-box;
+}
+
+.bmm-seat-row--same { border-bottom: none; padding: 0.5rem 0 1rem; }
+
+/* ── Sponsorships ────────────────────────────────────────────────────────── */
+
+.bmm-sponsorships { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.bmm-sponsorship-option {
+	padding: 0.75rem 1rem;
+	border: 1px solid var(--bmm-border);
+	border-radius: var(--bmm-radius);
+	background: var(--bmm-bg);
+	transition: border-color 0.15s;
+}
+
+.bmm-sponsorship-option:hover { border-color: var(--bmm-primary); }
+
+.bmm-sponsorship-amount {
+	display: inline-block;
+	background: var(--bmm-primary);
+	color: #fff;
+	border-radius: 999px;
+	padding: 0.1rem 0.6rem;
+	font-size: 0.85rem;
+	margin-left: 0.5rem;
+}
+
+/* ── Pricing preview ─────────────────────────────────────────────────────── */
+
+.bmm-pricing-preview {
+	margin-top: 1rem;
+	padding: 0.75rem 1rem;
+	background: var(--bmm-bg);
+	border: 1px solid var(--bmm-border);
+	border-radius: var(--bmm-radius);
+}
+
+.bmm-pricing-preview__row {
+	display: flex;
+	justify-content: space-between;
+	padding: 0.25rem 0;
+	font-size: 0.9rem;
+}
+
+/* ── Children ────────────────────────────────────────────────────────────── */
+
+.bmm-child-row {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+	align-items: center;
+}
+
+.bmm-child-row input { flex: 1; }
+
+.bmm-btn-icon {
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--bmm-error);
+	font-size: 1.2rem;
+	line-height: 1;
+	padding: 0 0.3rem;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+
+.bmm-btn {
+	display: inline-block;
+	padding: 0.6rem 1.4rem;
+	border-radius: var(--bmm-radius);
+	border: none;
+	cursor: pointer;
+	font-size: 1rem;
+	font-weight: 600;
+	transition: background 0.15s, transform 0.1s;
+}
+
+.bmm-btn--primary   { background: var(--bmm-primary); color: #fff; }
+.bmm-btn--primary:hover { background: var(--bmm-primary-dk); }
+.bmm-btn--secondary { background: #fff; color: var(--bmm-primary); border: 1.5px solid var(--bmm-primary); }
+.bmm-btn--sm        { padding: 0.3rem 0.8rem; font-size: 0.85rem; }
+.bmm-btn:disabled   { opacity: 0.6; cursor: not-allowed; }
+
+.bmm-form-nav {
+	display: flex;
+	gap: 1rem;
+	margin-top: 1.5rem;
+	justify-content: flex-end;
+}
+
+/* ── Notices ─────────────────────────────────────────────────────────────── */
+
+.bmm-notice {
+	padding: 0.75rem 1rem;
+	border-radius: var(--bmm-radius);
+	margin-bottom: 1rem;
+	font-weight: 500;
+}
+
+.bmm-notice--error   { background: #fef2f2; border: 1px solid #fecaca; color: var(--bmm-error); }
+.bmm-notice--success { background: #f0fdf4; border: 1px solid #bbf7d0; color: var(--bmm-success); }
+
+/* ── Summary (step 6) ────────────────────────────────────────────────────── */
+
+.bmm-summary {
+	margin-bottom: 1.5rem;
+	border: 1px solid var(--bmm-border);
+	border-radius: var(--bmm-radius);
+	overflow: hidden;
+}
+
+.bmm-summary__table { width: 100%; border-collapse: collapse; }
+.bmm-summary__table td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--bmm-border); }
+.bmm-summary__table td:last-child { text-align: right; font-weight: 600; }
+
+.bmm-summary__total td { font-size: 1.1rem; font-weight: 700; background: var(--bmm-bg); border-bottom: none; }
+
+/* ── Payment iframe ──────────────────────────────────────────────────────── */
+
+.bmm-iframe-wrap { margin-top: 1rem; }
+
+.bmm-success {
+	padding: 1.5rem;
+	background: #f0fdf4;
+	border: 1px solid #bbf7d0;
+	border-radius: var(--bmm-radius);
+	text-align: center;
+}
+
+.bmm-success h3 { color: var(--bmm-success); font-size: 1.4rem; }
+
+/* ── RTL overrides ───────────────────────────────────────────────────────── */
+
+[dir="rtl"] .bmm-form-nav { justify-content: flex-start; }
+[dir="rtl"] .bmm-field-row { direction: rtl; }
+
+/* ── Closed state ────────────────────────────────────────────────────────── */
+
+.bmm-form-closed {
+	padding: 1.5rem;
+	background: var(--bmm-bg);
+	border: 1px solid var(--bmm-border);
+	border-radius: var(--bmm-radius);
+	text-align: center;
+	color: var(--bmm-muted);
+}

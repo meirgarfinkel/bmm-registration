@@ -1,0 +1,50 @@
+/* BMM Registration — Admin Styles */
+
+.bmm-status {
+	display: inline-block;
+	padding: 2px 10px;
+	border-radius: 999px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	text-transform: capitalize;
+}
+
+.bmm-status--published  { background: #d1fae5; color: #065f46; }
+.bmm-status--draft      { background: #e5e7eb; color: #374151; }
+.bmm-status--archived   { background: #fef3c7; color: #92400e; }
+.bmm-status--pending    { background: #dbeafe; color: #1e40af; }
+.bmm-status--completed  { background: #d1fae5; color: #065f46; }
+.bmm-status--failed     { background: #fee2e2; color: #991b1b; }
+
+/* Form editor */
+.bmm-form-editor h3 {
+	font-size: 1rem;
+	margin-top: 1.5rem;
+	margin-bottom: 0.5rem;
+	padding-bottom: 4px;
+	border-bottom: 1px solid #dde2e9;
+}
+
+#bmm-sponsorships-table th { font-weight: 600; }
+#bmm-sponsorships-table td { vertical-align: middle; }
+#bmm-sponsorships-table .regular-text { width: 100%; }
+#bmm-sponsorships-table .small-text   { width: 70px; }
+
+/* Submission detail */
+.bmm-submission-detail h1 { display: flex; align-items: center; gap: 0.75rem; }
+
+.bmm-detail-columns {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+@media ( max-width: 900px ) {
+	.bmm-detail-columns { grid-template-columns: 1fr; }
+}
+
+.bmm-detail-section h2 {
+	font-size: 1rem;
+	margin-bottom: 0.5rem;
+}
