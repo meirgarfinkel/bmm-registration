@@ -27,7 +27,7 @@
 	<iframe
 		id="bmm-nedarim-iframe"
 		src="about:blank"
-		style="width:100%;border:none;"
+		style="width:100%;min-height:500px;border:none;"
 		title="<?php esc_attr_e( 'Secure Payment', 'bmm-registration' ); ?>"
 		aria-label="<?php esc_attr_e( 'Nedarim Plus secure payment form', 'bmm-registration' ); ?>"
 	></iframe>

@@ -68,34 +68,47 @@
 
 		const data = event.data;
 
-		// Iframe requests its own height
+		// Iframe requests the available container height
 		if ( data === 'NeedHeight' || ( typeof data === 'string' && data.startsWith( 'NeedHeight' ) ) ) {
 			respondWithHeight();
 			return;
 		}
 
-		// Iframe is ready to receive payment data
-		if ( data === 'NedarimReady' || ( typeof data === 'object' && data.Action === 'NedarimReady' ) ) {
+		// Iframe reports its own content height (number or digit string) → resize it
+		if ( typeof data === 'number' || ( typeof data === 'string' && /^\d+$/.test( data ) ) ) {
+			setIframeHeight( parseInt( data, 10 ) );
+			return;
+		}
+
+		// Iframe is ready to receive payment data.
+		// Nedarim Plus sends 'NedarimPlusReady' (their official name); some older
+		// builds send 'NedarimReady' or { Action: 'NedarimPlusReady' }.
+		if (
+			data === 'NedarimPlusReady' ||
+			data === 'NedarimReady' ||
+			( typeof data === 'object' && data !== null &&
+			  ( data.Action === 'NedarimPlusReady' || data.Action === 'NedarimReady' ) )
+		) {
 			sendPaymentData();
 			return;
 		}
 
-		// Payment result
-		if ( typeof data === 'object' && data.hasOwnProperty( 'Status' ) ) {
+		// Payment result object
+		if ( typeof data === 'object' && data !== null && Object.prototype.hasOwnProperty.call( data, 'Status' ) ) {
 			handleResult( data );
-			return;
-		}
-
-		// Height response — a number string
-		if ( typeof data === 'string' && /^\d+$/.test( data ) ) {
-			setIframeHeight( parseInt( data, 10 ) );
 			return;
 		}
 	}
 
+	/**
+	 * Respond to Nedarim's NeedHeight request with the iframe wrapper's available height.
+	 * Nedarim uses this to know how much vertical space it can expand into.
+	 */
 	function respondWithHeight() {
 		if ( ! iframe || ! iframe.contentWindow ) return;
-		iframe.contentWindow.postMessage( 'NeedHeight', NEDARIM_ORIGIN );
+		const wrap   = document.getElementById( 'bmm-iframe-wrap' );
+		const height = wrap ? wrap.clientHeight : document.documentElement.clientHeight;
+		iframe.contentWindow.postMessage( height || 600, NEDARIM_ORIGIN );
 	}
 
 	function setIframeHeight( px ) {
