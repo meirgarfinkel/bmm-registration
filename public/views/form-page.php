@@ -14,25 +14,32 @@ defined( 'ABSPATH' ) || exit;
 global $bmm_current_form_id, $bmm_diagnostic_message;
 
 /**
- * Output the inner form (or a diagnostic / not-found message).
+ * Build the inner form HTML (or a diagnostic / not-found message) as a string.
  */
-if ( ! function_exists( 'bmm_render_form_body' ) ) {
-	function bmm_render_form_body(): void {
+if ( ! function_exists( 'bmm_get_form_body' ) ) {
+	function bmm_get_form_body(): string {
 		global $bmm_current_form_id, $bmm_diagnostic_message;
-		echo '<div id="bmm-form-page" class="bmm-form-page" style="max-width:800px;margin:2rem auto;padding:0 1rem;">';
 		if ( ! empty( $bmm_diagnostic_message ) ) {
-			echo '<div style="background:#fcf2f2;border:1px solid #e0b4b4;color:#9f3a38;padding:12px 16px;border-radius:4px;">'
+			return '<div style="background:#fcf2f2;border:1px solid #e0b4b4;color:#9f3a38;padding:12px 16px;border-radius:4px;">'
 				. esc_html( $bmm_diagnostic_message ) . '</div>';
-		} elseif ( ! empty( $bmm_current_form_id ) ) {
-			echo BMM_Form_Renderer::render( (int) $bmm_current_form_id );
-		} else {
-			echo '<p>' . esc_html__( 'Registration form not found.', 'bmm-registration' ) . '</p>';
 		}
-		echo '</div>';
+		if ( ! empty( $bmm_current_form_id ) ) {
+			return BMM_Form_Renderer::render( (int) $bmm_current_form_id );
+		}
+		return '<p>' . esc_html__( 'Registration form not found.', 'bmm-registration' ) . '</p>';
 	}
 }
 
 if ( function_exists( 'wp_is_block_theme' ) && wp_is_block_theme() ) :
+	// Wrap the form in a real "constrained" group block so the theme's
+	// content width, centering and root padding (from theme.json) apply —
+	// matching how native page content is laid out. do_blocks() runs the
+	// layout support that generates the is-layout-constrained classes/CSS.
+	$bmm_main_blocks = '<!-- wp:group {"tagName":"main","layout":{"type":"constrained"}} -->'
+		. '<main class="wp-block-group">'
+		. '<!-- wp:html -->' . bmm_get_form_body() . '<!-- /wp:html -->'
+		. '</main>'
+		. '<!-- /wp:group -->';
 	?><!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -43,11 +50,11 @@ if ( function_exists( 'wp_is_block_theme' ) && wp_is_block_theme() ) :
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
 <div class="wp-site-blocks">
-	<?php echo do_blocks( '<!-- wp:template-part {"slug":"header","tagName":"header"} /-->' ); ?>
-	<main class="wp-block-group">
-		<?php bmm_render_form_body(); ?>
-	</main>
-	<?php echo do_blocks( '<!-- wp:template-part {"slug":"footer","tagName":"footer"} /-->' ); ?>
+	<?php
+	echo do_blocks( '<!-- wp:template-part {"slug":"header","tagName":"header"} /-->' );
+	echo do_blocks( $bmm_main_blocks );
+	echo do_blocks( '<!-- wp:template-part {"slug":"footer","tagName":"footer"} /-->' );
+	?>
 </div>
 <?php wp_footer(); ?>
 </body>
@@ -55,6 +62,8 @@ if ( function_exists( 'wp_is_block_theme' ) && wp_is_block_theme() ) :
 <?php
 else :
 	get_header();
-	bmm_render_form_body();
+	echo '<div id="bmm-form-page" class="bmm-form-page" style="max-width:800px;margin:2rem auto;padding:0 1rem;">'
+		. bmm_get_form_body()
+		. '</div>';
 	get_footer();
 endif;
