@@ -7,9 +7,11 @@ class BMM_Post_Types {
 		self::register_form_cpt();
 		self::register_submission_cpt();
 		self::register_custom_statuses();
+		self::add_rewrite_rule();   // must be called directly during 'init', not via add_action('init')
 		self::add_query_var();
 		self::intercept_publish_status();
 		self::register_permalink_filter();
+		self::register_nav_menu_status_fix();
 	}
 
 	private static function register_form_cpt(): void {
@@ -108,6 +110,25 @@ class BMM_Post_Types {
 	 * Publish button instead of our custom status controls.
 	 */
 	/**
+	 * The WordPress nav-menu meta box hardcodes post_status = 'publish'.
+	 * Our forms live at our custom 'published' status, so they're invisible
+	 * to that query. Expand the status array for any admin query on this CPT.
+	 */
+	private static function register_nav_menu_status_fix(): void {
+		add_action( 'pre_get_posts', function ( \WP_Query $q ): void {
+			if ( ! is_admin() ) return;
+			if ( $q->get( 'post_type' ) !== 'bmm_reg_form' ) return;
+
+			$statuses = (array) $q->get( 'post_status' );
+			// When WP queries for 'publish', also include our custom 'published'
+			if ( in_array( 'publish', $statuses, true ) && ! in_array( 'published', $statuses, true ) ) {
+				$statuses[] = 'published';
+				$q->set( 'post_status', $statuses );
+			}
+		} );
+	}
+
+	/**
 	 * Override the permalink for bmm_reg_form posts so WordPress menus,
 	 * admin columns, and any get_permalink() call return our pretty URL.
 	 */
@@ -156,9 +177,6 @@ class BMM_Post_Types {
 	}
 
 	private static function add_query_var(): void {
-		// Register the rewrite rule on 'init' (same action as register()).
-		add_action( 'init', [ self::class, 'add_rewrite_rule' ] );
-
 		add_filter( 'query_vars', function ( array $vars ): array {
 			$vars[] = 'bmm_form';
 			return $vars;
