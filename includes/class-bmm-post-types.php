@@ -208,6 +208,24 @@ class BMM_Post_Types {
 			return $vars;
 		} );
 
+		// Path-based routing that does NOT depend on the rewrite rule being
+		// flushed. If the request path is /register/{slug}/, set the bmm_form
+		// query var directly. This is the authoritative router; the rewrite
+		// rule is kept only as a belt-and-suspenders for pretty-permalink envs.
+		add_filter( 'request', function ( array $qv ): array {
+			if ( ! empty( $qv['bmm_form'] ) ) {
+				return $qv; // rewrite rule already resolved it
+			}
+			$path = isset( $_SERVER['REQUEST_URI'] )
+				? (string) wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH )
+				: '';
+			if ( $path && preg_match( '#(?:^|/)register/([^/]+)/?$#i', $path, $m ) ) {
+				// Replace the query vars entirely so WP does not build a 404 query.
+				return [ 'bmm_form' => urldecode( $m[1] ) ];
+			}
+			return $qv;
+		} );
+
 		// Enqueue form assets on the proper hook so CSS lands in <head>.
 		// (template_include fires after wp_head, so enqueuing inside render()
 		// alone would drop the stylesheet from the header.)
@@ -235,6 +253,20 @@ class BMM_Post_Types {
 
 			$form_post = BMM_Form_Config::get_by_slug( $slug );
 			if ( ! $form_post ) {
+				// Route is active but no form resolved. Don't fail silently —
+				// surface the reason to admins so the cause is unambiguous.
+				if ( current_user_can( 'manage_options' ) ) {
+					global $bmm_diagnostic_message;
+					$bmm_diagnostic_message = sprintf(
+						'BMM diagnostic: no registration form found for slug "%s". '
+						. 'Check that the form exists and its slug matches the URL.',
+						esc_html( $slug )
+					);
+					global $wp_query;
+					$wp_query->is_404 = false;
+					status_header( 200 );
+					return BMM_REG_DIR . 'public/views/form-page.php';
+				}
 				return $template;
 			}
 

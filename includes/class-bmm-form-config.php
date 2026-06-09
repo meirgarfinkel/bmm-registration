@@ -89,7 +89,23 @@ class BMM_Form_Config {
 			'posts_per_page' => 1,
 			'fields'         => 'all',
 		] );
-		return $posts[0] ?? null;
+		if ( ! empty( $posts[0] ) ) {
+			return $posts[0];
+		}
+
+		// Direct DB fallback — catches any post_status (custom statuses can be
+		// excluded by WP_Query in some configurations) and any post_name match.
+		global $wpdb;
+		$id = $wpdb->get_var( $wpdb->prepare(
+			"SELECT ID FROM {$wpdb->posts} WHERE post_type = 'bmm_reg_form' AND post_name = %s LIMIT 1",
+			$slug
+		) );
+		if ( $id ) {
+			$post = get_post( (int) $id );
+			return ( $post && $post->post_type === 'bmm_reg_form' ) ? $post : null;
+		}
+
+		return null;
 	}
 
 	public function get_public_url(): string {
