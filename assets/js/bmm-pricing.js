@@ -125,10 +125,17 @@
 	// Exposed so bmm-form.js can trigger a refresh (e.g. when entering step 5)
 	window.bmmFetchPrice = fetchPrice;
 
-	if ( document.readyState === 'loading' ) {
-		document.addEventListener( 'DOMContentLoaded', () => { init(); populateSeatPriceNote(); } );
-	} else {
+	function boot() {
 		init();
 		populateSeatPriceNote();
+		// Prime the preview with whatever values are already in the form
+		// (handles sessionStorage-restored state and first entry to step 3).
+		fetchPrice();
+	}
+
+	if ( document.readyState === 'loading' ) {
+		document.addEventListener( 'DOMContentLoaded', boot );
+	} else {
+		boot();
 	}
 } )();

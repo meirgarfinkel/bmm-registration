@@ -77,8 +77,8 @@
 		nextBtn.hidden   = n >= state.totalSteps;
 		submitBtn.hidden = n !== state.totalSteps - 1; // step 5
 
-		// When entering step 5, refresh pricing so the order summary is current
-		if ( n === 5 && typeof window.bmmFetchPrice === 'function' ) {
+		// Refresh pricing whenever the user reaches step 3 or 5
+		if ( ( n === 3 || n === 5 ) && typeof window.bmmFetchPrice === 'function' ) {
 			window.bmmFetchPrice();
 		}
 
