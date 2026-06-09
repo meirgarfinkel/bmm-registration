@@ -105,21 +105,25 @@ class BMM_Post_Types {
 			return $vars;
 		} );
 
-		add_action( 'template_redirect', function (): void {
+		// Use template_include so we fully control the output.
+		// The_content approach fails because the home/blog template never calls
+		// the_content() in a single-post context when only a query var is present.
+		add_filter( 'template_include', function ( string $template ): string {
 			$slug = get_query_var( 'bmm_form' );
 			if ( ! $slug ) {
-				return;
+				return $template;
 			}
 
 			$form_post = BMM_Form_Config::get_by_slug( $slug );
 			if ( ! $form_post ) {
-				return;
+				return $template;
 			}
 
-			// Render the registration form page
-			add_filter( 'the_content', function () use ( $form_post ): string {
-				return BMM_Form_Renderer::render( $form_post->ID );
-			} );
+			// Pass form ID to the template via a global.
+			global $bmm_current_form_id;
+			$bmm_current_form_id = $form_post->ID;
+
+			return BMM_REG_DIR . 'public/views/form-page.php';
 		} );
 	}
 }
