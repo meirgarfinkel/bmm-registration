@@ -15,15 +15,13 @@ class BMM_REST_Submit extends \WP_REST_Controller {
 	}
 
 	public function submit( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
-		// Nonce check. We use the standard 'wp_rest' nonce so that WordPress's
-		// own REST cookie-auth check (rest_cookie_check_errors) passes for
-		// logged-in users — a custom nonce in X-WP-Nonce would be rejected with
-		// 403 before this callback ever runs.
-		$nonce = $request->get_header( 'X-WP-Nonce' ) ?: $request->get_param( '_wpnonce' );
-		if ( ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
-			return new \WP_Error( 'invalid_nonce', __( 'Security check failed.', 'bmm-registration' ), [ 'status' => 403 ] );
-		}
-
+		// This is a public, anonymous registration endpoint. We intentionally
+		// do NOT require a WordPress nonce here: nonces sent via X-WP-Nonce
+		// trigger WordPress's REST cookie-auth check, which rejects the request
+		// with 403 ("Cookie check failed") whenever the nonce isn't a fresh
+		// 'wp_rest' nonce — which is unreliable for anonymous users and under
+		// page caching. The submission only creates a *pending* record; the
+		// Nedarim payment step is the authoritative gate.
 		$data    = $request->get_params();
 		$form_id = (int) ( $data['form_id'] ?? 0 );
 

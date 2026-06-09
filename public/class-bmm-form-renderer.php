@@ -61,6 +61,7 @@ class BMM_Form_Renderer {
 		var box = document.getElementById( 'bmm-admin-diagnostic' );
 		if ( ! box ) { return; }
 		var out = [];
+		out.push( 'plugin version: <?php echo esc_js( BMM_REG_VERSION ); ?>' );
 		out.push( 'bmmConfig: ' + ( window.bmmConfig ? 'present' : 'MISSING' ) );
 		out.push( 'bmm-form.js loaded: ' + ( typeof window.bmmState !== 'undefined' ) );
 		out.push( 'bmm-pricing.js loaded: ' + ( typeof window.bmmFetchPrice === 'function' ) );

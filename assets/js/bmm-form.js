@@ -206,17 +206,19 @@
 
 		const body = {
 			form_id:   parseInt( wrap.dataset.formId, 10 ),
-			_wpnonce:  cfg.nonce,
 			...state.formData,
 		};
 
 		try {
 			const res = await fetch( cfg.submitEndpoint, {
 				method:  'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-WP-Nonce':   cfg.nonce,
-				},
+				// No X-WP-Nonce header: this is a public, anonymous endpoint.
+				// Any X-WP-Nonce value (valid or not) forces WordPress's REST
+				// cookie-auth check, which 403s ("Cookie check failed") whenever
+				// the nonce isn't a fresh 'wp_rest' nonce — which breaks under
+				// page caching and for logged-out users. Omitting it entirely
+				// makes WordPress skip that check.
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify( body ),
 			} );
 
