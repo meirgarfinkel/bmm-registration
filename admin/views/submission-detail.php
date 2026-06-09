@@ -99,7 +99,16 @@ if ( $form_config && is_array( $meta['sponsorships_selected'] ) ) {
 		<div class="bmm-detail-section">
 			<h2><?php esc_html_e( 'Payment', 'bmm-registration' ); ?></h2>
 			<table class="widefat striped">
-				<tr><th><?php esc_html_e( 'Payment Type', 'bmm-registration' ); ?></th><td><?php echo $meta['payment_type'] === 'HK' ? esc_html__( 'Horaat Keva', 'bmm-registration' ) : esc_html__( 'Regular', 'bmm-registration' ); ?></td></tr>
+				<tr><th><?php esc_html_e( 'Payment Type', 'bmm-registration' ); ?></th><td><?php
+					if ( $meta['payment_type'] === 'Tashlumim' ) {
+						$n = (int) ( $meta['tashlumim'] ?? 0 );
+						echo $n > 1
+							? esc_html( sprintf( __( 'Tashlumim (%d payments)', 'bmm-registration' ), $n ) )
+							: esc_html__( 'Tashlumim', 'bmm-registration' );
+					} else {
+						esc_html_e( 'Pay in full', 'bmm-registration' );
+					}
+				?></td></tr>
 				<tr><th><?php esc_html_e( 'Membership Fee', 'bmm-registration' ); ?></th><td>₪<?php echo esc_html( $meta['price_membership'] ); ?></td></tr>
 				<tr><th><?php esc_html_e( "Extra Men's Seats", 'bmm-registration' ); ?></th><td>₪<?php echo esc_html( $meta['price_extra_men'] ); ?></td></tr>
 				<tr><th><?php esc_html_e( "Extra Women's Seats", 'bmm-registration' ); ?></th><td>₪<?php echo esc_html( $meta['price_extra_women'] ); ?></td></tr>

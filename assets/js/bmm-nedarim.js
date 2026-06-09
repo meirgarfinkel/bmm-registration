@@ -70,11 +70,9 @@
 		const f    = frame();
 		if ( ! wrap || ! f ) return;
 
-		// HK (standing order) hides validity + CVV per Nedarim's token rules.
-		let src = BASE_URL;
-		if ( data && data.payment_type === 'HK' ) {
-			src += '?Tokef=Hide&CVV=Hide';
-		}
+		// Credit-card transaction (Ragil, optionally in installments) — the
+		// customer needs the full card form (number, validity, CVV).
+		const src = BASE_URL;
 
 		dataSent = false;
 		// DO NOT send the transaction params on load — FinishTransaction2
@@ -148,11 +146,10 @@
 		const d  = nedarimData;
 		const fd = ( window.bmmState && window.bmmState.formData ) || {};
 
-		const isHK = d.payment_type === 'HK';
-
 		// All parameters must be present, even if empty (per Nedarim spec).
-		// Tashlumim is the customer's chosen installments (Ragil) / months (HK),
-		// already clamped to the per-form max by the server. Blank = HK unlimited.
+		// PaymentType is always 'Ragil' (a credit-card transaction); Tashlumim
+		// is the number of payments to divide the total into (1 = pay in full),
+		// already resolved/clamped by the server.
 		postNedarim( 'FinishTransaction2', {
 			Mosad:            String( d.mosad || '' ),
 			ApiValid:         String( d.api_valid || '' ),
@@ -163,9 +160,9 @@
 			City:             fd.city        || '',
 			Phone:            ( fd.phone || '' ).replace( /\D/g, '' ),
 			Mail:             fd.email       || '',
-			PaymentType:      isHK ? 'HK' : 'Ragil',
-			Amount:           String( d.total ),   // authoritative, server-computed
-			Tashlumim:        d.tashlumim != null ? String( d.tashlumim ) : '',
+			PaymentType:      'Ragil',
+			Amount:           String( d.total ),   // full total; Nedarim divides it across Tashlumim
+			Tashlumim:        String( d.tashlumim || 1 ),
 			Day:              '',
 			Currency:         '1',                  // 1 = NIS
 			Groupe:           '',

@@ -130,7 +130,9 @@ class BMM_CSV_Export {
 			$seats_women[ $dav_keys[4] ] ?? 0, $seats_women[ $dav_keys[5] ] ?? 0,
 			implode( '; ', $sponsorship_labels ),
 			$meta['notes'],
-			$meta['payment_type'],
+			( $meta['payment_type'] === 'Tashlumim' )
+				? 'Tashlumim (' . (int) ( $meta['tashlumim'] ?? 0 ) . ')'
+				: 'Pay in full',
 			$meta['price_membership'],
 			$meta['price_extra_men'],
 			$meta['price_extra_women'],

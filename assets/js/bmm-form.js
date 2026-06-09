@@ -51,10 +51,13 @@
 		// Enforce mutual exclusivity between membership and guest seats
 		wireGuestMembershipToggle();
 
-		// Update the installments/months selector when the payment type changes
+		// Update the installments selector when the payment type changes,
+		// and the per-payment hint when the number of payments changes.
 		wrap.querySelectorAll( '[name="payment_type"]' ).forEach( el => {
 			el.addEventListener( 'change', updateTashlumimSelector );
 		} );
+		const tashSelect = document.getElementById( 'bmm_tashlumim' );
+		if ( tashSelect ) tashSelect.addEventListener( 'change', updateTashlumimHint );
 
 		// Restore from sessionStorage
 		restoreState();
@@ -200,12 +203,11 @@
 
 		if ( step === 5 ) {
 			state.formData.notes        = ( wrap.querySelector( '[name="notes"]' )?.value || '' ).trim();
-			state.formData.payment_type = wrap.querySelector( '[name="payment_type"]:checked' )?.value || 'Ragil';
-			// Installments/months: the selector's value when shown, else default
-			// (blank = HK unlimited / Regular single payment, resolved server-side).
-			const tashEl = document.getElementById( 'bmm-tashlumim-field' );
+			const type = wrap.querySelector( '[name="payment_type"]:checked' )?.value || 'Ragil';
+			state.formData.payment_type = type;
+			// Number of payments: 1 for "pay in full"; the chosen count for Tashlumim.
 			const tashSel = document.getElementById( 'bmm_tashlumim' );
-			state.formData.tashlumim = ( tashEl && ! tashEl.hidden && tashSel ) ? tashSel.value : '';
+			state.formData.tashlumim = ( type === 'Tashlumim' && tashSel ) ? ( parseInt( tashSel.value, 10 ) || 2 ) : 1;
 		}
 	}
 
@@ -337,43 +339,57 @@
 		if ( el ) el.textContent = cfg.guestSeatPrice || 0;
 	}
 
-	// Show a "Number of payments / months" dropdown on step 5, populated from
-	// the per-form max for the selected payment type. The chosen value is sent
-	// to Nedarim as Tashlumim. Hidden when there's no choice to make
-	// (Regular max = 1 → single payment; HK max = 0 → unlimited).
+	// Payment method on step 5: "Pay in full" (Ragil) or "Pay in installments"
+	// (Tashlumim, 2..maxInstallments). The Tashlumim radio + the count selector
+	// only appear when the form allows installments (maxInstallments > 1).
 	function updateTashlumimSelector() {
-		const field  = document.getElementById( 'bmm-tashlumim-field' );
-		const select = document.getElementById( 'bmm_tashlumim' );
-		const label  = document.getElementById( 'bmm-tashlumim-label' );
-		if ( ! field || ! select ) return;
+		const maxInst    = parseInt( cfg.maxInstallments, 10 ) || 1;
+		const tashOption = document.getElementById( 'bmm-option-tashlumim' );
+		const field      = document.getElementById( 'bmm-tashlumim-field' );
+		const select     = document.getElementById( 'bmm_tashlumim' );
 
-		const type = wrap.querySelector( '[name="payment_type"]:checked' )?.value || 'Ragil';
-		let max = 0;
-		if ( type === 'HK' ) {
-			max = parseInt( cfg.hkMaxMonths, 10 ) || 0;
-			if ( label ) label.textContent = "Number of months";
-		} else {
-			max = parseInt( cfg.ragilMaxPayments, 10 ) || 1;
-			if ( label ) label.textContent = "Number of payments";
-		}
+		// Offer the installments option only when the form allows it.
+		if ( tashOption ) tashOption.hidden = maxInst <= 1;
 
-		if ( max <= 1 ) {
-			// No choice to offer.
-			field.hidden = true;
-			select.innerHTML = '';
+		if ( maxInst <= 1 ) {
+			const ragil = wrap.querySelector( '[name="payment_type"][value="Ragil"]' );
+			if ( ragil ) ragil.checked = true;
+			if ( field ) field.hidden = true;
 			return;
 		}
 
-		const current = select.value;
-		select.innerHTML = '';
-		for ( let i = 1; i <= max; i++ ) {
-			const opt = document.createElement( 'option' );
-			opt.value = String( i );
-			opt.textContent = String( i );
-			select.appendChild( opt );
+		const type = wrap.querySelector( '[name="payment_type"]:checked' )?.value || 'Ragil';
+		if ( type !== 'Tashlumim' ) {
+			if ( field ) field.hidden = true;
+			return;
 		}
-		if ( current && parseInt( current, 10 ) <= max ) select.value = current;
-		field.hidden = false;
+
+		// Tashlumim chosen → populate the count selector with 2..maxInst.
+		if ( select ) {
+			const current = select.value;
+			select.innerHTML = '';
+			for ( let i = 2; i <= maxInst; i++ ) {
+				const opt = document.createElement( 'option' );
+				opt.value = String( i );
+				opt.textContent = String( i );
+				select.appendChild( opt );
+			}
+			if ( current && parseInt( current, 10 ) >= 2 && parseInt( current, 10 ) <= maxInst ) {
+				select.value = current;
+			}
+		}
+		if ( field ) field.hidden = false;
+		updateTashlumimHint();
+	}
+
+	// "≈ ₪300 × 10 = ₪3,000 total" helper under the count selector.
+	function updateTashlumimHint() {
+		const hint   = document.getElementById( 'bmm-tashlumim-hint' );
+		const select = document.getElementById( 'bmm_tashlumim' );
+		if ( ! hint || ! select ) return;
+		const total = ( window.bmmState && window.bmmState.lastPricing && window.bmmState.lastPricing.total ) || 0;
+		const n     = parseInt( select.value, 10 ) || 0;
+		hint.textContent = ( total && n ) ? ( '≈ ₪' + Math.round( total / n ) + ' × ' + n + ' months  (₪' + total + ' total)' ) : '';
 	}
 
 	function wireGuestMembershipToggle() {

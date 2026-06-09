@@ -61,7 +61,8 @@ class BMM_Submission {
 		// Notes & payment type
 		self::set_meta( $post_id, [
 			'notes'        => sanitize_textarea_field( $data['notes'] ?? '' ),
-			'payment_type' => in_array( $data['payment_type'] ?? 'Ragil', [ 'Ragil', 'HK' ], true ) ? $data['payment_type'] : 'Ragil',
+			'payment_type' => in_array( $data['payment_type'] ?? 'Ragil', [ 'Ragil', 'Tashlumim' ], true ) ? $data['payment_type'] : 'Ragil',
+			'tashlumim'    => max( 1, (int) ( $data['tashlumim'] ?? 1 ) ),
 		] );
 
 		// Pricing (locked at submission time)
@@ -125,7 +126,7 @@ class BMM_Submission {
 			'first_name', 'last_name', 'email', 'phone', 'city', 'address', 'zeout',
 			'hebrew_name', 'tribe', 'wife_hebrew_name', 'children_hebrew_names',
 			'wants_membership', 'seats_men', 'seats_women', 'sponsorships_selected',
-			'notes', 'payment_type',
+			'notes', 'payment_type', 'tashlumim',
 			'price_membership', 'price_extra_men', 'price_extra_women', 'price_sponsorships', 'price_total',
 			'nedarim_transaction_id', 'nedarim_keva_id', 'nedarim_confirmation', 'nedarim_last_num',
 			'payment_completed_at', 'amount_mismatch',

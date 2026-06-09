@@ -120,21 +120,13 @@ class BMM_Form_Editor {
 			'membership_included_women' => 'intval',
 			'extra_seat_price'          => 'intval',
 			'guest_seat_price'          => 'intval',
-			'ragil_max_payments'        => 'intval',
-			'hk_max_months'             => 'intval',
+			'max_installments'          => 'intval',
 		];
 
 		foreach ( $fields as $key => $sanitize ) {
 			$val = isset( $_POST[ "bmm_form_{$key}" ] ) ? $sanitize( $_POST[ "bmm_form_{$key}" ] ) : 0;
 			update_post_meta( $post_id, "_bmm_form_{$key}", $val );
 		}
-
-		// Payment options
-		$payment_options = sanitize_key( $_POST['bmm_form_payment_options'] ?? 'both' );
-		if ( ! in_array( $payment_options, [ 'ragil', 'hk', 'both' ], true ) ) {
-			$payment_options = 'both';
-		}
-		update_post_meta( $post_id, '_bmm_form_payment_options', $payment_options );
 
 		// Credentials
 		update_post_meta( $post_id, '_bmm_form_mosad',     sanitize_text_field( $_POST['bmm_form_mosad'] ?? '' ) );

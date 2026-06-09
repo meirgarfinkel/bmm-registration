@@ -39,30 +39,32 @@
 	<textarea id="bmm_notes" name="notes" rows="4" placeholder="<?php esc_attr_e( 'Any additional information or special requests...', 'bmm-registration' ); ?>"></textarea>
 </div>
 
-<!-- Payment type — shown/hidden based on form config (controlled by JS) -->
+<!-- Payment method: pay in full (Ragil) or in installments (Tashlumim).
+     The Tashlumim option + the count selector are shown by bmm-form.js only
+     when the form allows installments (maxInstallments > 1). -->
 <div class="bmm-field" id="bmm-payment-type-field">
 	<label><?php esc_html_e( 'Payment Method', 'bmm-registration' ); ?> <span class="bmm-required">*</span></label>
 	<div class="bmm-radio-group" role="radiogroup">
 		<label class="bmm-radio" id="bmm-option-ragil">
 			<input type="radio" name="payment_type" value="Ragil" checked />
 			<span>
-				<strong><?php esc_html_e( 'Regular Payment', 'bmm-registration' ); ?></strong>
-				<span class="description"><?php esc_html_e( 'One-time credit card payment', 'bmm-registration' ); ?></span>
+				<strong><?php esc_html_e( 'Pay in full', 'bmm-registration' ); ?></strong>
+				<span class="description"><?php esc_html_e( 'One credit-card payment for the full amount', 'bmm-registration' ); ?></span>
 			</span>
 		</label>
-		<label class="bmm-radio" id="bmm-option-hk">
-			<input type="radio" name="payment_type" value="HK" />
+		<label class="bmm-radio" id="bmm-option-tashlumim" hidden>
+			<input type="radio" name="payment_type" value="Tashlumim" />
 			<span>
-				<strong><?php esc_html_e( 'Horaat Keva', 'bmm-registration' ); ?></strong>
-				<span class="description"><?php esc_html_e( 'Monthly standing order – spread payments over multiple months', 'bmm-registration' ); ?></span>
+				<strong><?php esc_html_e( 'Pay in installments (Tashlumim)', 'bmm-registration' ); ?></strong>
+				<span class="description"><?php esc_html_e( 'Split the total into equal monthly credit-card payments', 'bmm-registration' ); ?></span>
 			</span>
 		</label>
 	</div>
 </div>
 
-<!-- Installments / months selector — shown/populated by bmm-form.js based on
-     payment type and the per-form max (ragilMaxPayments / hkMaxMonths). -->
+<!-- Number-of-payments selector — shown when "Tashlumim" is chosen. -->
 <div class="bmm-field" id="bmm-tashlumim-field" hidden>
-	<label for="bmm_tashlumim"><span id="bmm-tashlumim-label"><?php esc_html_e( 'Number of payments', 'bmm-registration' ); ?></span></label>
+	<label for="bmm_tashlumim"><?php esc_html_e( 'Number of payments', 'bmm-registration' ); ?></label>
 	<select id="bmm_tashlumim" name="tashlumim"></select>
+	<p class="description" id="bmm-tashlumim-hint"></p>
 </div>

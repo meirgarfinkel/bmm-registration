@@ -57,7 +57,7 @@ class BMM_REST_Submit extends \WP_REST_Controller {
 				'total'        => $pricing['total'],
 				'mosad'        => $form->mosad ?: '(empty)',
 				'api_valid'    => $form->api_valid ? '(set)' : '(empty)',
-				'payment_type' => in_array( $data['payment_type'] ?? 'Ragil', [ 'Ragil', 'HK' ], true ) ? $data['payment_type'] : 'Ragil',
+				'payment_type' => in_array( $data['payment_type'] ?? 'Ragil', [ 'Ragil', 'Tashlumim' ], true ) ? $data['payment_type'] : 'Ragil',
 			], 200 );
 		}
 
@@ -75,15 +75,17 @@ class BMM_REST_Submit extends \WP_REST_Controller {
 		// Build summary for Nedarim Comment field (≤300 chars)
 		$comment = $this->build_comment( $data, $pricing );
 
-		// Resolve the customer-chosen installments/months, clamped to the
-		// per-form maximum. Sent to Nedarim as Tashlumim.
-		$payment_type = in_array( $data['payment_type'] ?? 'Ragil', [ 'Ragil', 'HK' ], true ) ? $data['payment_type'] : 'Ragil';
-		$chosen       = (int) ( $data['tashlumim'] ?? 0 );
-		if ( $payment_type === 'HK' ) {
-			// 0 / no max ⇒ unlimited (blank); otherwise clamp to [1, max].
-			$tashlumim = $form->hk_max_months > 0 ? (string) max( 1, min( $chosen ?: 1, $form->hk_max_months ) ) : '';
+		// Resolve the number of payments. The customer chose "Ragil" (pay in
+		// full) or "Tashlumim" (installments). Nedarim treats both as a Ragil
+		// credit-card transaction; the only difference is the Tashlumim count:
+		//   Ragil      → 1 payment for the full total
+		//   Tashlumim  → split into N payments (2..max), Nedarim divides the total
+		$choice = in_array( $data['payment_type'] ?? 'Ragil', [ 'Ragil', 'Tashlumim' ], true ) ? $data['payment_type'] : 'Ragil';
+		$chosen = (int) ( $data['tashlumim'] ?? 1 );
+		if ( $choice === 'Tashlumim' && $form->max_installments > 1 ) {
+			$tashlumim = (string) max( 2, min( $chosen, $form->max_installments ) );
 		} else {
-			$tashlumim = (string) max( 1, min( $chosen ?: 1, $form->ragil_max_payments ) );
+			$tashlumim = '1';
 		}
 
 		return new \WP_REST_Response( [
@@ -92,8 +94,8 @@ class BMM_REST_Submit extends \WP_REST_Controller {
 			'itemized'      => $pricing,
 			'mosad'         => $form->mosad,
 			'api_valid'     => $form->api_valid,
-			'payment_type'  => $payment_type,
-			'tashlumim'     => $tashlumim, // customer-chosen, clamped to the per-form max
+			'payment_type'  => 'Ragil',   // Nedarim PaymentType — always a credit-card (Ragil) transaction
+			'tashlumim'     => $tashlumim, // 1 = pay in full; N = split into N payments
 			'callback_url'  => $callback_url,
 			'comment'       => $comment,
 		], 200 );
@@ -121,16 +123,13 @@ class BMM_REST_Submit extends \WP_REST_Controller {
 			$errors['tribe'] = __( 'Please select your tribe.', 'bmm-registration' );
 		}
 
-		// Validate payment type is allowed by form
+		// Validate payment choice: "Ragil" (pay in full) or "Tashlumim"
+		// (installments). Installments require the form to allow them.
 		$payment_type = $data['payment_type'] ?? 'Ragil';
-		$allowed = $form->payment_options;
-		if ( $allowed !== 'both' ) {
-			$expected = $allowed === 'hk' ? 'HK' : 'Ragil';
-			if ( $payment_type !== $expected ) {
-				$errors['payment_type'] = __( 'Invalid payment type.', 'bmm-registration' );
-			}
-		} elseif ( ! in_array( $payment_type, [ 'Ragil', 'HK' ], true ) ) {
+		if ( ! in_array( $payment_type, [ 'Ragil', 'Tashlumim' ], true ) ) {
 			$errors['payment_type'] = __( 'Invalid payment type.', 'bmm-registration' );
+		} elseif ( $payment_type === 'Tashlumim' && $form->max_installments <= 1 ) {
+			$errors['payment_type'] = __( 'Installments are not available for this form.', 'bmm-registration' );
 		}
 
 		return $errors;

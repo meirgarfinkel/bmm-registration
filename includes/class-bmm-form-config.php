@@ -13,9 +13,7 @@ class BMM_Form_Config {
 	public int    $extra_seat_price;
 	public int    $guest_seat_price;
 	public array  $sponsorships;
-	public string $payment_options;
-	public int    $ragil_max_payments;  // max installments a customer may pick for Regular (1 = single payment)
-	public int    $hk_max_months;        // max months a customer may pick for Horaat Keva (0 = unlimited only)
+	public int    $max_installments;     // max Tashlumim a customer may split the total into (1 = no installments, pay in full only)
 	public string $mosad;
 	public string $api_valid;
 
@@ -45,9 +43,7 @@ class BMM_Form_Config {
 		$this->membership_included_women = (int) ( $m( 'membership_included_women' ) ?: 0 );
 		$this->extra_seat_price          = (int) ( $m( 'extra_seat_price' ) ?: 0 );
 		$this->guest_seat_price          = (int) ( $m( 'guest_seat_price' ) ?: 0 );
-		$this->payment_options           = $m( 'payment_options' ) ?: 'both';
-		$this->ragil_max_payments        = max( 1, (int) ( $m( 'ragil_max_payments' ) ?: 1 ) );
-		$this->hk_max_months             = max( 0, (int) ( $m( 'hk_max_months' ) ?: 0 ) );
+		$this->max_installments          = max( 1, (int) ( $m( 'max_installments' ) ?: 12 ) );
 
 		$raw_sponsorships   = $m( 'sponsorships' );
 		$this->sponsorships = $raw_sponsorships

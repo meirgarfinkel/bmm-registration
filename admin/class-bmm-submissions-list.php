@@ -108,7 +108,13 @@ class BMM_Submissions_List extends \WP_List_Table {
 
 	public function column_payment_type( \WP_Post $item ): string {
 		$type = get_post_meta( $item->ID, '_bmm_sub_payment_type', true );
-		return $type === 'HK' ? __( 'Horaat Keva', 'bmm-registration' ) : __( 'Regular', 'bmm-registration' );
+		if ( $type === 'Tashlumim' ) {
+			$n = (int) get_post_meta( $item->ID, '_bmm_sub_tashlumim', true );
+			return $n > 1
+				? sprintf( /* translators: %d = number of payments */ __( 'Tashlumim (%d)', 'bmm-registration' ), $n )
+				: __( 'Tashlumim', 'bmm-registration' );
+		}
+		return __( 'Pay in full', 'bmm-registration' );
 	}
 
 	public function column_payment_status( \WP_Post $item ): string {
