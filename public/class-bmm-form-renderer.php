@@ -113,7 +113,7 @@ class BMM_Form_Renderer {
 			'formTitle'       => $form->title,
 			'priceEndpoint'   => rest_url( 'bmm/v1/calculate-price' ),
 			'submitEndpoint'  => rest_url( 'bmm/v1/submit' ),
-			'nonce'           => wp_create_nonce( 'bmm_submit' ),
+			'nonce'           => wp_create_nonce( 'wp_rest' ),
 			'paymentOptions'  => $form->payment_options,
 			'sponsorships'    => $form->enabled_sponsorships(),
 			'membershipPrice' => $form->membership_price,

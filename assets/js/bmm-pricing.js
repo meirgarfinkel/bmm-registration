@@ -50,10 +50,10 @@
 		try {
 			const res = await fetch( cfg.priceEndpoint, {
 				method:  'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-WP-Nonce':   cfg.nonce || '',
-				},
+				// No X-WP-Nonce header: this is a public endpoint. Sending a
+				// non-'wp_rest' nonce here makes WordPress reject the request
+				// with 403 ("Cookie check failed") for logged-in users.
+				headers: { 'Content-Type': 'application/json' },
 				body:    JSON.stringify( {
 					form_id:           cfg.formId,
 					wants_membership:  wantsMembership,
