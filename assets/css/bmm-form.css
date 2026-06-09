@@ -124,18 +124,36 @@
 .bmm-field input[type="email"],
 .bmm-field input[type="tel"],
 .bmm-field input[type="number"],
-.bmm-field textarea {
+.bmm-field textarea,
+.bmm-field select {
 	width: 100%;
 	padding: 0.55rem 0.75rem;
 	border: 1px solid var(--bmm-border);
 	border-radius: var(--bmm-radius);
 	font-size: 1rem;
+	line-height: 1.4;
+	background-color: #fff;
+	color: var(--bmm-text);
 	transition: border-color 0.15s;
 	box-sizing: border-box;
 }
 
+/* Native select: consistent height + a custom chevron */
+.bmm-field select {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	height: calc(1.4em + 1.1rem + 2px); /* match text inputs */
+	padding-right: 2.25rem;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 0.85rem center;
+	cursor: pointer;
+}
+
 .bmm-field input:focus,
-.bmm-field textarea:focus {
+.bmm-field textarea:focus,
+.bmm-field select:focus {
 	outline: none;
 	border-color: var(--bmm-primary);
 	box-shadow: 0 0 0 3px rgba(44,111,173,.15);
@@ -162,6 +180,29 @@
 
 .bmm-radio input,
 .bmm-checkbox input { margin-top: 0.2rem; flex-shrink: 0; }
+
+/* Stack the title and its description, and make the option look like a card */
+.bmm-radio {
+	padding: 0.7rem 0.9rem;
+	border: 1px solid var(--bmm-border);
+	border-radius: var(--bmm-radius);
+	background: var(--bmm-bg);
+	transition: border-color 0.15s;
+}
+
+.bmm-radio:hover { border-color: var(--bmm-primary); }
+
+.bmm-radio > span {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+}
+
+.bmm-radio .description {
+	font-size: 0.85rem;
+	color: var(--bmm-muted);
+	font-weight: 400;
+}
 
 /* ── Membership ──────────────────────────────────────────────────────────── */
 

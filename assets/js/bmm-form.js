@@ -371,11 +371,15 @@
 			for ( let i = 2; i <= maxInst; i++ ) {
 				const opt = document.createElement( 'option' );
 				opt.value = String( i );
-				opt.textContent = String( i );
+				opt.textContent = i + ' payments';
 				select.appendChild( opt );
 			}
+			// Keep a previous valid choice; otherwise default to the maximum
+			// (e.g. 12) so the customer spreads payments as far as allowed.
 			if ( current && parseInt( current, 10 ) >= 2 && parseInt( current, 10 ) <= maxInst ) {
 				select.value = current;
+			} else {
+				select.value = String( maxInst );
 			}
 		}
 		if ( field ) field.hidden = false;
