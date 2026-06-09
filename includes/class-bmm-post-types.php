@@ -126,22 +126,27 @@ class BMM_Post_Types {
 	}
 
 	/**
-	 * The WordPress nav-menu meta box hardcodes post_status = 'publish'.
-	 * Our forms live at our custom 'published' status, so they're invisible
-	 * to that query. Expand the status array for any admin query on this CPT.
+	 * Make published forms appear in the Appearance → Menus meta box.
+	 *
+	 * The nav-menu meta box (wp_nav_menu_item_post_type_meta_box) builds its
+	 * post query with suppress_filters = true, so pre_get_posts never fires.
+	 * It also applies _wp_nav_menu_meta_box_object(), which hardcodes
+	 * _default_query => ['post_status' => 'publish'] for custom post types.
+	 * Our forms use the custom 'published' status, so that query returns zero
+	 * rows ("No items"). The only effective hook is nav_menu_meta_box_object:
+	 * override _default_query to accept both 'publish' and 'published'.
 	 */
 	private static function register_nav_menu_status_fix(): void {
-		add_action( 'pre_get_posts', function ( \WP_Query $q ): void {
-			if ( ! is_admin() ) return;
-			if ( $q->get( 'post_type' ) !== 'bmm_reg_form' ) return;
-
-			$statuses = (array) $q->get( 'post_status' );
-			// When WP queries for 'publish', also include our custom 'published'
-			if ( in_array( 'publish', $statuses, true ) && ! in_array( 'published', $statuses, true ) ) {
-				$statuses[] = 'published';
-				$q->set( 'post_status', $statuses );
+		add_filter( 'nav_menu_meta_box_object', function ( $object ) {
+			if ( isset( $object->name ) && $object->name === 'bmm_reg_form' ) {
+				$object->_default_query = [
+					'post_status' => [ 'publish', 'published' ],
+					'orderby'     => 'title',
+					'order'       => 'ASC',
+				];
 			}
-		} );
+			return $object;
+		}, 11 ); // after core's _wp_nav_menu_meta_box_object (priority 10)
 	}
 
 	/**
@@ -203,6 +208,25 @@ class BMM_Post_Types {
 			return $vars;
 		} );
 
+		// Enqueue form assets on the proper hook so CSS lands in <head>.
+		// (template_include fires after wp_head, so enqueuing inside render()
+		// alone would drop the stylesheet from the header.)
+		add_action( 'wp_enqueue_scripts', function (): void {
+			$slug = get_query_var( 'bmm_form' );
+			if ( ! $slug ) {
+				return;
+			}
+			$form_post = BMM_Form_Config::get_by_slug( $slug );
+			if ( ! $form_post ) {
+				return;
+			}
+			try {
+				BMM_Form_Renderer::enqueue_assets( new BMM_Form_Config( $form_post->ID ) );
+			} catch ( \Exception $e ) {
+				// Form config invalid — render() will handle the user-facing message.
+			}
+		} );
+
 		add_filter( 'template_include', function ( string $template ): string {
 			$slug = get_query_var( 'bmm_form' );
 			if ( ! $slug ) {
@@ -214,8 +238,11 @@ class BMM_Post_Types {
 				return $template;
 			}
 
-			// Build a fake $post so theme templates that call the_content() work.
-			// Without this, templates render a blog loop or a blank content area.
+			// Build a fake $post AND fully populate the main query so that any
+			// theme template's loop (have_posts()/the_post()) actually runs and
+			// calls the_content() — that's where we inject the form. Without
+			// populating $wp_query->posts, the loop body never executes and the
+			// page renders theme chrome with no content.
 			global $post, $wp_query;
 			$post = new \WP_Post( (object) [
 				'ID'             => 0,
@@ -226,30 +253,38 @@ class BMM_Post_Types {
 				'post_type'      => 'page',
 				'post_name'      => $form_post->post_name,
 				'post_author'    => 0,
-				'post_date'      => '',
-				'post_date_gmt'  => '',
+				'post_date'      => current_time( 'mysql' ),
+				'post_date_gmt'  => current_time( 'mysql', true ),
 				'comment_status' => 'closed',
 				'ping_status'    => 'closed',
+				'comment_count'  => 0,
 				'filter'         => 'raw',
 			] );
-			setup_postdata( $post );
 
-			// Tell WP this is a singular page so is_page() etc. return correctly.
-			// The main query found no real post for /register/{slug}/ and set
-			// is_404 = true (+ queued a 404 header); clear both so the theme
-			// renders our content with a 200 OK instead of "Page Not Found".
+			// Replace the (empty, 404-ing) main query with our single fake post.
+			$wp_query->posts             = [ $post ];
+			$wp_query->post              = $post;
+			$wp_query->queried_object    = $post;
+			$wp_query->queried_object_id = 0;
+			$wp_query->post_count        = 1;
+			$wp_query->found_posts       = 1;
+			$wp_query->max_num_pages     = 1;
+			$wp_query->current_post      = -1;
 			$wp_query->is_page     = true;
 			$wp_query->is_singular = true;
+			$wp_query->is_single   = false;
 			$wp_query->is_home     = false;
 			$wp_query->is_archive  = false;
+			$wp_query->is_search   = false;
 			$wp_query->is_404      = false;
-			$wp_query->queried_object = $post;
+			setup_postdata( $post );
 			status_header( 200 );
 
 			// Inject the form HTML wherever the theme calls the_content().
-			add_filter( 'the_content', function () use ( $form_post ): string {
+			// High priority so it wins over other the_content filters.
+			add_filter( 'the_content', function ( $content ) use ( $form_post ) {
 				return BMM_Form_Renderer::render( $form_post->ID );
-			} );
+			}, 99 );
 
 			// Suppress unwanted output (comments, post nav, etc.).
 			add_filter( 'comments_open',   '__return_false' );

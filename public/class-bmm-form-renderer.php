@@ -38,7 +38,7 @@ class BMM_Form_Renderer {
 		return self::get_html( $form );
 	}
 
-	private static function enqueue_assets( BMM_Form_Config $form ): void {
+	public static function enqueue_assets( BMM_Form_Config $form ): void {
 		wp_enqueue_style( 'bmm-form', BMM_REG_URL . 'assets/css/bmm-form.css', [], BMM_REG_VERSION );
 		wp_enqueue_script( 'bmm-form',    BMM_REG_URL . 'assets/js/bmm-form.js',    [], BMM_REG_VERSION, true );
 		wp_enqueue_script( 'bmm-seats',   BMM_REG_URL . 'assets/js/bmm-seats.js',   [ 'bmm-form' ], BMM_REG_VERSION, true );
