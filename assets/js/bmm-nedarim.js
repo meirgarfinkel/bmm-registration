@@ -149,11 +149,10 @@
 		const fd = ( window.bmmState && window.bmmState.formData ) || {};
 
 		const isHK = d.payment_type === 'HK';
-		const tashlumim = ( d.tashlumim && String( d.tashlumim ) !== '0' )
-			? String( d.tashlumim )
-			: ( isHK ? '' : '1' ); // HK blank = unlimited; Ragil default 1
 
 		// All parameters must be present, even if empty (per Nedarim spec).
+		// Tashlumim is left blank so the Nedarim screen presents the
+		// installment/month options per the Mosad's configuration.
 		postNedarim( 'FinishTransaction2', {
 			Mosad:            String( d.mosad || '' ),
 			ApiValid:         String( d.api_valid || '' ),
@@ -166,7 +165,7 @@
 			Mail:             fd.email       || '',
 			PaymentType:      isHK ? 'HK' : 'Ragil',
 			Amount:           String( d.total ),   // authoritative, server-computed
-			Tashlumim:        tashlumim,
+			Tashlumim:        '',
 			Day:              '',
 			Currency:         '1',                  // 1 = NIS
 			Groupe:           '',

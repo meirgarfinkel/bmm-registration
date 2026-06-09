@@ -82,7 +82,8 @@ class BMM_REST_Submit extends \WP_REST_Controller {
 			'mosad'         => $form->mosad,
 			'api_valid'     => $form->api_valid,
 			'payment_type'  => in_array( $data['payment_type'] ?? 'Ragil', [ 'Ragil', 'HK' ], true ) ? $data['payment_type'] : 'Ragil',
-			'tashlumim'     => ( $data['payment_type'] ?? 'Ragil' ) === 'HK' ? (string) $form->hk_months : (string) $form->ragil_tashlumim,
+			// Tashlumim intentionally omitted — the Nedarim Plus payment screen
+			// presents installment/month options per the Mosad's configuration.
 			'callback_url'  => $callback_url,
 			'comment'       => $comment,
 		], 200 );

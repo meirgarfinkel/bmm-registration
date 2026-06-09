@@ -11,8 +11,6 @@ $m = function( string $key, mixed $default = '' ) use ( $post, $config ): mixed 
 			'extra_seat_price'          => $config->extra_seat_price,
 				'guest_seat_price'          => $config->guest_seat_price,
 			'payment_options'           => $config->payment_options,
-			'hk_months'                 => $config->hk_months,
-			'ragil_tashlumim'           => $config->ragil_tashlumim,
 			'mosad'                     => get_post_meta( $post->ID, '_bmm_form_mosad', true ),
 			'api_valid'                 => get_post_meta( $post->ID, '_bmm_form_api_valid', true ),
 			'sponsorships'              => $config->sponsorships,
@@ -66,17 +64,7 @@ $sponsorships = $config ? $config->sponsorships : BMM_Form_Config::default_spons
 				<label><input type="radio" name="bmm_form_payment_options" value="both"  <?php checked( $po, 'both' ); ?> /> <?php esc_html_e( 'Both (Regular & Horaat Keva)', 'bmm-registration' ); ?></label><br>
 				<label><input type="radio" name="bmm_form_payment_options" value="ragil" <?php checked( $po, 'ragil' ); ?> /> <?php esc_html_e( 'Regular (one-time) only', 'bmm-registration' ); ?></label><br>
 				<label><input type="radio" name="bmm_form_payment_options" value="hk"    <?php checked( $po, 'hk' ); ?> /> <?php esc_html_e( 'Horaat Keva (standing order) only', 'bmm-registration' ); ?></label>
-			</td>
-		</tr>
-		<tr>
-			<th><label for="bmm_form_ragil_tashlumim"><?php esc_html_e( 'Regular Payment – Number of Installments', 'bmm-registration' ); ?></label></th>
-			<td><input type="number" id="bmm_form_ragil_tashlumim" name="bmm_form_ragil_tashlumim" value="<?php echo esc_attr( $m( 'ragil_tashlumim', 1 ) ); ?>" min="1" class="small-text" /></td>
-		</tr>
-		<tr>
-			<th><label for="bmm_form_hk_months"><?php esc_html_e( 'Horaat Keva – Number of Months', 'bmm-registration' ); ?></label></th>
-			<td>
-				<input type="number" id="bmm_form_hk_months" name="bmm_form_hk_months" value="<?php echo esc_attr( $m( 'hk_months', 0 ) ); ?>" min="0" class="small-text" />
-				<p class="description"><?php esc_html_e( '0 = unlimited (charge indefinitely).', 'bmm-registration' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Number of installments (regular) or months (Horaat Keva) is chosen on the Nedarim Plus payment screen, per your Mosad configuration.', 'bmm-registration' ); ?></p>
 			</td>
 		</tr>
 	</table>

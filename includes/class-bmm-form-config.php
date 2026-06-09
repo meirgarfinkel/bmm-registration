@@ -14,8 +14,6 @@ class BMM_Form_Config {
 	public int    $guest_seat_price;
 	public array  $sponsorships;
 	public string $payment_options;
-	public int    $hk_months;
-	public int    $ragil_tashlumim;
 	public string $mosad;
 	public string $api_valid;
 
@@ -46,8 +44,6 @@ class BMM_Form_Config {
 		$this->extra_seat_price          = (int) ( $m( 'extra_seat_price' ) ?: 0 );
 		$this->guest_seat_price          = (int) ( $m( 'guest_seat_price' ) ?: 0 );
 		$this->payment_options           = $m( 'payment_options' ) ?: 'both';
-		$this->hk_months                 = (int) ( $m( 'hk_months' ) ?: 0 );
-		$this->ragil_tashlumim           = (int) ( $m( 'ragil_tashlumim' ) ?: 1 );
 
 		$raw_sponsorships   = $m( 'sponsorships' );
 		$this->sponsorships = $raw_sponsorships
