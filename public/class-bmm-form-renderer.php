@@ -62,25 +62,33 @@ class BMM_Form_Renderer {
 		if ( ! box ) { return; }
 		var out = [];
 		out.push( 'bmmConfig: ' + ( window.bmmConfig ? 'present' : 'MISSING' ) );
-		if ( window.bmmConfig ) {
-			out.push( 'formId: ' + window.bmmConfig.formId );
-			out.push( 'priceEndpoint: ' + window.bmmConfig.priceEndpoint );
-			out.push( 'submitEndpoint: ' + window.bmmConfig.submitEndpoint );
-			out.push( 'nonce: ' + ( window.bmmConfig.nonce ? 'present' : 'MISSING' ) );
-		}
 		out.push( 'bmm-form.js loaded: ' + ( typeof window.bmmState !== 'undefined' ) );
 		out.push( 'bmm-pricing.js loaded: ' + ( typeof window.bmmFetchPrice === 'function' ) );
+
+		// DOM presence of the elements updateUI()/Nedarim target.
+		function exists( id ) { return document.getElementById( id ) ? 'yes' : 'MISSING'; }
+		out.push( 'subtotal row el: ' + exists( 'bmm-preview-subtotal' ) + ', amount el: ' + exists( 'bmm-preview-subtotal-amount' ) );
+		out.push( 'guest checkbox el: ' + exists( 'bmm_wants_guest_seats' ) );
+		out.push( 'nedarim iframe el: ' + exists( 'bmm-nedarim-iframe' ) + ', wrap el: ' + exists( 'bmm-iframe-wrap' ) );
 		box.textContent = out.join( '\n' );
 
-		fetch( <?php echo wp_json_encode( $price_ep ); ?>, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify( { form_id: <?php echo $fid; ?>, wants_membership: true, seats_men: {}, seats_women: {}, sponsorship_ids: [] } )
-		} )
-		.then( function ( r ) { return r.text().then( function ( t ) {
-			box.textContent += '\n\nprice endpoint → HTTP ' + r.status + '\n' + t.slice( 0, 500 );
-		} ); } )
-		.catch( function ( e ) { box.textContent += '\n\nprice endpoint → FETCH ERROR: ' + e; } );
+		// Drive the REAL updateUI path: tick membership, call the real
+		// fetchPrice, then read back the rendered DOM. This proves whether the
+		// live JS actually paints the subtotal (vs. a stale cached bundle).
+		var mcb = document.getElementById( 'bmm_wants_membership' );
+		if ( mcb && typeof window.bmmFetchPrice === 'function' ) {
+			var wasChecked = mcb.checked;
+			mcb.checked = true;
+			window.bmmFetchPrice();
+			setTimeout( function () {
+				var amt = document.getElementById( 'bmm-preview-subtotal-amount' );
+				var row = document.getElementById( 'bmm-preview-subtotal' );
+				box.textContent += '\n\nAFTER real fetchPrice():'
+					+ '\n  subtotal amount text: "' + ( amt ? amt.textContent : 'NO EL' ) + '"'
+					+ '\n  subtotal row hidden: ' + ( row ? row.hidden : 'NO EL' );
+				mcb.checked = wasChecked;
+			}, 1500 );
+		}
 	} );
 } )();
 </script>
