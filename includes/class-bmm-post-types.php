@@ -9,6 +9,7 @@ class BMM_Post_Types {
 		self::register_custom_statuses();
 		self::add_query_var();
 		self::intercept_publish_status();
+		self::register_permalink_filter();
 	}
 
 	private static function register_form_cpt(): void {
@@ -27,6 +28,7 @@ class BMM_Post_Types {
 			'public'              => false,
 			'show_ui'             => true,
 			'show_in_menu'        => false,
+			'show_in_nav_menus'   => true,   // lets published forms appear in Appearance → Menus
 			'supports'            => [ 'title' ],
 			'capability_type'     => 'post',
 			'map_meta_cap'        => true,
@@ -105,6 +107,23 @@ class BMM_Post_Types {
 	 * for bmm_reg_form posts. This fires whenever an admin uses the native WP
 	 * Publish button instead of our custom status controls.
 	 */
+	/**
+	 * Override the permalink for bmm_reg_form posts so WordPress menus,
+	 * admin columns, and any get_permalink() call return our pretty URL.
+	 */
+	public static function register_permalink_filter(): void {
+		add_filter( 'post_type_link', function ( string $url, \WP_Post $post ): string {
+			if ( $post->post_type !== 'bmm_reg_form' ) {
+				return $url;
+			}
+			if ( $post->post_name ) {
+				return home_url( '/register/' . $post->post_name . '/' );
+			}
+			// Unslugged draft — keep query-string fallback
+			return add_query_arg( 'bmm_form', $post->ID, home_url( '/' ) );
+		}, 10, 2 );
+	}
+
 	private static function intercept_publish_status(): void {
 		add_action( 'transition_post_status', function ( string $new, string $old, \WP_Post $post ): void {
 			if ( $post->post_type !== 'bmm_reg_form' || $new !== 'publish' ) {
