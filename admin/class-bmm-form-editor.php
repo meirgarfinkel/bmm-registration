@@ -120,6 +120,8 @@ class BMM_Form_Editor {
 			'membership_included_women' => 'intval',
 			'extra_seat_price'          => 'intval',
 			'guest_seat_price'          => 'intval',
+			'ragil_max_payments'        => 'intval',
+			'hk_max_months'             => 'intval',
 		];
 
 		foreach ( $fields as $key => $sanitize ) {

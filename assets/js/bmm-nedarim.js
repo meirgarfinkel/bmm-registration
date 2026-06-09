@@ -151,8 +151,8 @@
 		const isHK = d.payment_type === 'HK';
 
 		// All parameters must be present, even if empty (per Nedarim spec).
-		// Tashlumim is left blank so the Nedarim screen presents the
-		// installment/month options per the Mosad's configuration.
+		// Tashlumim is the customer's chosen installments (Ragil) / months (HK),
+		// already clamped to the per-form max by the server. Blank = HK unlimited.
 		postNedarim( 'FinishTransaction2', {
 			Mosad:            String( d.mosad || '' ),
 			ApiValid:         String( d.api_valid || '' ),
@@ -165,7 +165,7 @@
 			Mail:             fd.email       || '',
 			PaymentType:      isHK ? 'HK' : 'Ragil',
 			Amount:           String( d.total ),   // authoritative, server-computed
-			Tashlumim:        '',
+			Tashlumim:        d.tashlumim != null ? String( d.tashlumim ) : '',
 			Day:              '',
 			Currency:         '1',                  // 1 = NIS
 			Groupe:           '',

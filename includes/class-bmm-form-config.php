@@ -14,6 +14,8 @@ class BMM_Form_Config {
 	public int    $guest_seat_price;
 	public array  $sponsorships;
 	public string $payment_options;
+	public int    $ragil_max_payments;  // max installments a customer may pick for Regular (1 = single payment)
+	public int    $hk_max_months;        // max months a customer may pick for Horaat Keva (0 = unlimited only)
 	public string $mosad;
 	public string $api_valid;
 
@@ -44,6 +46,8 @@ class BMM_Form_Config {
 		$this->extra_seat_price          = (int) ( $m( 'extra_seat_price' ) ?: 0 );
 		$this->guest_seat_price          = (int) ( $m( 'guest_seat_price' ) ?: 0 );
 		$this->payment_options           = $m( 'payment_options' ) ?: 'both';
+		$this->ragil_max_payments        = max( 1, (int) ( $m( 'ragil_max_payments' ) ?: 1 ) );
+		$this->hk_max_months             = max( 0, (int) ( $m( 'hk_max_months' ) ?: 0 ) );
 
 		$raw_sponsorships   = $m( 'sponsorships' );
 		$this->sponsorships = $raw_sponsorships

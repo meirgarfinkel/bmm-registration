@@ -75,15 +75,25 @@ class BMM_REST_Submit extends \WP_REST_Controller {
 		// Build summary for Nedarim Comment field (≤300 chars)
 		$comment = $this->build_comment( $data, $pricing );
 
+		// Resolve the customer-chosen installments/months, clamped to the
+		// per-form maximum. Sent to Nedarim as Tashlumim.
+		$payment_type = in_array( $data['payment_type'] ?? 'Ragil', [ 'Ragil', 'HK' ], true ) ? $data['payment_type'] : 'Ragil';
+		$chosen       = (int) ( $data['tashlumim'] ?? 0 );
+		if ( $payment_type === 'HK' ) {
+			// 0 / no max ⇒ unlimited (blank); otherwise clamp to [1, max].
+			$tashlumim = $form->hk_max_months > 0 ? (string) max( 1, min( $chosen ?: 1, $form->hk_max_months ) ) : '';
+		} else {
+			$tashlumim = (string) max( 1, min( $chosen ?: 1, $form->ragil_max_payments ) );
+		}
+
 		return new \WP_REST_Response( [
 			'submission_id' => $submission_id,
 			'total'         => $pricing['total'],
 			'itemized'      => $pricing,
 			'mosad'         => $form->mosad,
 			'api_valid'     => $form->api_valid,
-			'payment_type'  => in_array( $data['payment_type'] ?? 'Ragil', [ 'Ragil', 'HK' ], true ) ? $data['payment_type'] : 'Ragil',
-			// Tashlumim intentionally omitted — the Nedarim Plus payment screen
-			// presents installment/month options per the Mosad's configuration.
+			'payment_type'  => $payment_type,
+			'tashlumim'     => $tashlumim, // customer-chosen, clamped to the per-form max
 			'callback_url'  => $callback_url,
 			'comment'       => $comment,
 		], 200 );

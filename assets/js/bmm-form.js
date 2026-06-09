@@ -51,6 +51,11 @@
 		// Enforce mutual exclusivity between membership and guest seats
 		wireGuestMembershipToggle();
 
+		// Update the installments/months selector when the payment type changes
+		wrap.querySelectorAll( '[name="payment_type"]' ).forEach( el => {
+			el.addEventListener( 'change', updateTashlumimSelector );
+		} );
+
 		// Restore from sessionStorage
 		restoreState();
 
@@ -89,6 +94,10 @@
 		// Refresh pricing whenever the user reaches step 3 or 5
 		if ( ( n === 3 || n === 5 ) && typeof window.bmmFetchPrice === 'function' ) {
 			window.bmmFetchPrice();
+		}
+		// Keep the installments/months selector in sync on step 5
+		if ( n === 5 ) {
+			updateTashlumimSelector();
 		}
 
 		// Step 6 (payment): a submission must exist for the iframe to load.
@@ -192,6 +201,11 @@
 		if ( step === 5 ) {
 			state.formData.notes        = ( wrap.querySelector( '[name="notes"]' )?.value || '' ).trim();
 			state.formData.payment_type = wrap.querySelector( '[name="payment_type"]:checked' )?.value || 'Ragil';
+			// Installments/months: the selector's value when shown, else default
+			// (blank = HK unlimited / Regular single payment, resolved server-side).
+			const tashEl = document.getElementById( 'bmm-tashlumim-field' );
+			const tashSel = document.getElementById( 'bmm_tashlumim' );
+			state.formData.tashlumim = ( tashEl && ! tashEl.hidden && tashSel ) ? tashSel.value : '';
 		}
 	}
 
@@ -321,6 +335,45 @@
 	function populateGuestSeatPriceHint() {
 		const el = document.getElementById( 'bmm-guest-seat-price' );
 		if ( el ) el.textContent = cfg.guestSeatPrice || 0;
+	}
+
+	// Show a "Number of payments / months" dropdown on step 5, populated from
+	// the per-form max for the selected payment type. The chosen value is sent
+	// to Nedarim as Tashlumim. Hidden when there's no choice to make
+	// (Regular max = 1 → single payment; HK max = 0 → unlimited).
+	function updateTashlumimSelector() {
+		const field  = document.getElementById( 'bmm-tashlumim-field' );
+		const select = document.getElementById( 'bmm_tashlumim' );
+		const label  = document.getElementById( 'bmm-tashlumim-label' );
+		if ( ! field || ! select ) return;
+
+		const type = wrap.querySelector( '[name="payment_type"]:checked' )?.value || 'Ragil';
+		let max = 0;
+		if ( type === 'HK' ) {
+			max = parseInt( cfg.hkMaxMonths, 10 ) || 0;
+			if ( label ) label.textContent = "Number of months";
+		} else {
+			max = parseInt( cfg.ragilMaxPayments, 10 ) || 1;
+			if ( label ) label.textContent = "Number of payments";
+		}
+
+		if ( max <= 1 ) {
+			// No choice to offer.
+			field.hidden = true;
+			select.innerHTML = '';
+			return;
+		}
+
+		const current = select.value;
+		select.innerHTML = '';
+		for ( let i = 1; i <= max; i++ ) {
+			const opt = document.createElement( 'option' );
+			opt.value = String( i );
+			opt.textContent = String( i );
+			select.appendChild( opt );
+		}
+		if ( current && parseInt( current, 10 ) <= max ) select.value = current;
+		field.hidden = false;
 	}
 
 	function wireGuestMembershipToggle() {

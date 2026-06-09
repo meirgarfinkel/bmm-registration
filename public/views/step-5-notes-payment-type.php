@@ -59,3 +59,10 @@
 		</label>
 	</div>
 </div>
+
+<!-- Installments / months selector — shown/populated by bmm-form.js based on
+     payment type and the per-form max (ragilMaxPayments / hkMaxMonths). -->
+<div class="bmm-field" id="bmm-tashlumim-field" hidden>
+	<label for="bmm_tashlumim"><span id="bmm-tashlumim-label"><?php esc_html_e( 'Number of payments', 'bmm-registration' ); ?></span></label>
+	<select id="bmm_tashlumim" name="tashlumim"></select>
+</div>

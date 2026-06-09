@@ -175,6 +175,8 @@ class BMM_Form_Renderer {
 			'submitEndpoint'  => rest_url( 'bmm/v1/submit' ),
 			'nonce'           => wp_create_nonce( 'wp_rest' ),
 			'paymentOptions'  => $form->payment_options,
+				'ragilMaxPayments'=> $form->ragil_max_payments,
+				'hkMaxMonths'     => $form->hk_max_months,
 			'sponsorships'    => $form->enabled_sponsorships(),
 			'membershipPrice' => $form->membership_price,
 			'includedMen'     => $form->membership_included_men,
