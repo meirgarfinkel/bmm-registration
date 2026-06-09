@@ -283,12 +283,19 @@ class BMM_Post_Types {
 				return $template;
 			}
 
-			// Build a fake $post AND fully populate the main query so that any
-			// theme template's loop (have_posts()/the_post()) actually runs and
-			// calls the_content() — that's where we inject the form. Without
-			// populating $wp_query->posts, the loop body never executes and the
-			// page renders theme chrome with no content.
-			global $post, $wp_query;
+			// Render the form EXACTLY ONCE via our own wrapper (form-page.php),
+			// which calls get_header(), echoes the form, then get_footer().
+			//
+			// We deliberately do NOT inject the form through a the_content filter
+			// and do NOT push a fake post into the loop. Doing both (wrapper echo
+			// + the_content injection, or a theme template that loops) rendered
+			// the form TWICE, producing duplicate element IDs. The JS bound to the
+			// first copy while the user interacted with the second — which is why
+			// live pricing never updated and field values appeared to reset.
+			//
+			// A minimal fake $post is set only so theme header/footer helpers
+			// (body_class, document title, etc.) have something to read.
+			global $post, $wp_query, $bmm_current_form_id;
 			$post = new \WP_Post( (object) [
 				'ID'             => 0,
 				'post_title'     => $form_post->post_title,
@@ -305,16 +312,8 @@ class BMM_Post_Types {
 				'comment_count'  => 0,
 				'filter'         => 'raw',
 			] );
-
-			// Replace the (empty, 404-ing) main query with our single fake post.
-			$wp_query->posts             = [ $post ];
-			$wp_query->post              = $post;
 			$wp_query->queried_object    = $post;
 			$wp_query->queried_object_id = 0;
-			$wp_query->post_count        = 1;
-			$wp_query->found_posts       = 1;
-			$wp_query->max_num_pages     = 1;
-			$wp_query->current_post      = -1;
 			$wp_query->is_page     = true;
 			$wp_query->is_singular = true;
 			$wp_query->is_single   = false;
@@ -322,37 +321,8 @@ class BMM_Post_Types {
 			$wp_query->is_archive  = false;
 			$wp_query->is_search   = false;
 			$wp_query->is_404      = false;
-			setup_postdata( $post );
 			status_header( 200 );
 
-			// Inject the form HTML wherever the theme calls the_content().
-			// High priority so it wins over other the_content filters.
-			add_filter( 'the_content', function ( $content ) use ( $form_post ) {
-				return BMM_Form_Renderer::render( $form_post->ID );
-			}, 99 );
-
-			// Suppress unwanted output (comments, post nav, etc.).
-			add_filter( 'comments_open',   '__return_false' );
-			add_filter( 'pings_open',      '__return_false' );
-			add_filter( 'get_the_excerpt', '__return_empty_string' );
-
-			// Resolve the chosen theme template, falling back to our own wrapper.
-			try {
-				$config          = new BMM_Form_Config( $form_post->ID );
-				$chosen_filename = $config->page_template;
-			} catch ( \Exception $e ) {
-				$chosen_filename = '';
-			}
-
-			if ( $chosen_filename ) {
-				$theme_path = get_theme_file_path( $chosen_filename );
-				if ( file_exists( $theme_path ) ) {
-					return $theme_path;
-				}
-			}
-
-			// No template chosen — use the plugin's own minimal wrapper.
-			global $bmm_current_form_id;
 			$bmm_current_form_id = $form_post->ID;
 			return BMM_REG_DIR . 'public/views/form-page.php';
 		} );

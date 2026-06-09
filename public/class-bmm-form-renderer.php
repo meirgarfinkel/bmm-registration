@@ -65,6 +65,11 @@ class BMM_Form_Renderer {
 		out.push( 'bmm-form.js loaded: ' + ( typeof window.bmmState !== 'undefined' ) );
 		out.push( 'bmm-pricing.js loaded: ' + ( typeof window.bmmFetchPrice === 'function' ) );
 
+		// Duplicate-render check: these MUST be 1. More than one means the form
+		// was rendered twice, which breaks all JS via duplicate element IDs.
+		out.push( '#bmm-registration count: ' + document.querySelectorAll( '#bmm-registration' ).length + ' (must be 1)' );
+		out.push( 'wants_membership input count: ' + document.querySelectorAll( '[name="wants_membership"]' ).length + ' (must be 1)' );
+
 		// DOM presence of the elements updateUI()/Nedarim target.
 		function exists( id ) { return document.getElementById( id ) ? 'yes' : 'MISSING'; }
 		out.push( 'subtotal row el: ' + exists( 'bmm-preview-subtotal' ) + ', amount el: ' + exists( 'bmm-preview-subtotal-amount' ) );
