@@ -479,9 +479,25 @@
 		if ( d.membership )       addRow( 'Membership', d.membership );
 		if ( d.extra_men_seats )  addRow( `Extra men's seats (×${ d.extra_men_count })`, d.extra_men_seats );
 		if ( d.extra_women_seats) addRow( `Extra women's seats (×${ d.extra_women_count })`, d.extra_women_seats );
+		if ( d.guest_men_seats )  addRow( `Guest men's seats (×${ d.guest_men_count })`, d.guest_men_seats );
+		if ( d.guest_women_seats) addRow( `Guest women's seats (×${ d.guest_women_count })`, d.guest_women_seats );
 		( d.sponsorships || [] ).forEach( s => addRow( s.label, s.amount ) );
 
-		if ( totalEl ) totalEl.textContent = '₪' + ( state.submittedTotal || 0 );
+		const total = state.submittedTotal || 0;
+		if ( totalEl ) totalEl.textContent = '₪' + total;
+
+		// Installment plan note: the total is charged in N monthly payments.
+		const noteEl = document.getElementById( 'bmm-installment-note' );
+		if ( noteEl ) {
+			const n = parseInt( state.nedarimData.tashlumim, 10 ) || 1;
+			if ( total && n > 1 ) {
+				noteEl.textContent = `Charged in ${ n } monthly payments of ≈ ₪${ Math.round( total / n ) } (₪${ total } total).`;
+				noteEl.hidden = false;
+			} else {
+				noteEl.textContent = '';
+				noteEl.hidden = true;
+			}
+		}
 	};
 
 	// ── Boot ──────────────────────────────────────────────────────────────────

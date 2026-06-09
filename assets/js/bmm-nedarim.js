@@ -89,8 +89,15 @@
 	function showPayButton() {
 		const btn = document.getElementById( 'bmm-pay-now' );
 		if ( ! btn ) return;
-		const total = nedarimData && nedarimData.total ? nedarimData.total : '';
-		btn.textContent = total ? ( 'Pay ₪' + total ) : 'Pay';
+		const total = nedarimData && nedarimData.total ? parseInt( nedarimData.total, 10 ) : 0;
+		const n     = nedarimData && nedarimData.tashlumim ? parseInt( nedarimData.tashlumim, 10 ) : 1;
+		if ( total && n > 1 ) {
+			// Installments: show the monthly amount, since the card is charged
+			// n times (Nedarim divides the full total).
+			btn.textContent = 'Pay ' + n + ' × ₪' + Math.round( total / n ) + ' (₪' + total + ' total)';
+		} else {
+			btn.textContent = total ? ( 'Pay ₪' + total ) : 'Pay';
+		}
 		btn.disabled = false;
 		btn.hidden = false;
 	}

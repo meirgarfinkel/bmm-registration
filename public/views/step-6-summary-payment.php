@@ -14,6 +14,7 @@
 			</tr>
 		</tfoot>
 	</table>
+	<p class="bmm-installment-note" id="bmm-installment-note" hidden style="margin:0.5rem 0 0;padding:0.5rem 1rem;color:#1e4f82;font-weight:600;"></p>
 </div>
 
 <!-- Payment processing status -->
