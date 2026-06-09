@@ -20,7 +20,7 @@ class BMM_Shortcode {
 			return;
 		}
 		// Pull the form slug/ID out of the shortcode so we can localize config.
-		if ( preg_match( '/\[bmm_registration[^\]]*form=["\']?([^"\'\]\s]+)/', $post->post_content, $m ) ) {
+		if ( preg_match( '/\[bmm_registration[^\]]*(?:form|id)=["\']?([^"\'\]\s]+)/', $post->post_content, $m ) ) {
 			$form_post = BMM_Form_Config::get_by_slug( sanitize_title( $m[1] ) );
 			if ( $form_post ) {
 				try {
@@ -32,15 +32,28 @@ class BMM_Shortcode {
 		}
 	}
 
-	public static function render( array $atts ): string {
-		$atts = shortcode_atts( [ 'form' => '' ], $atts, 'bmm_registration' );
-		$slug = sanitize_title( $atts['form'] );
+	/**
+	 * Renders a registration form.
+	 *
+	 * Usage:
+	 *   [bmm_registration form="your-form-slug"]
+	 *   [bmm_registration id="123"]            // by numeric form ID
+	 *
+	 * Add it to any Page or Post. In the block editor use a "Shortcode" block;
+	 * in the classic editor paste it straight into the content. The host page
+	 * renders with your full theme (header, logo, footer, layout).
+	 *
+	 * @param array|string $atts Shortcode attributes ('form' slug, or 'id').
+	 */
+	public static function render( $atts ): string {
+		$atts = shortcode_atts( [ 'form' => '', 'id' => '' ], $atts, 'bmm_registration' );
+		$ref  = sanitize_title( $atts['form'] ?: $atts['id'] );
 
-		if ( ! $slug ) {
-			return '<p>' . esc_html__( 'Registration form not specified.', 'bmm-registration' ) . '</p>';
+		if ( ! $ref ) {
+			return '<p>' . esc_html__( 'Registration form not specified. Use [bmm_registration form="your-form-slug"].', 'bmm-registration' ) . '</p>';
 		}
 
-		$form_post = BMM_Form_Config::get_by_slug( $slug );
+		$form_post = BMM_Form_Config::get_by_slug( $ref );
 		if ( ! $form_post ) {
 			return '<p>' . esc_html__( 'Registration form not found.', 'bmm-registration' ) . '</p>';
 		}

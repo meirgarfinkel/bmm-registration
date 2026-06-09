@@ -47,6 +47,11 @@
 					<?php else : ?>
 						<a href="<?php echo esc_url( $public_url ); ?>" target="_blank"><?php esc_html_e( 'Preview (draft)', 'bmm-registration' ); ?></a>
 					<?php endif; ?>
+					<?php $bmm_sc = '[bmm_registration form="' . ( $form->post_name ?: $form->ID ) . '"]'; ?>
+					<div class="description" style="margin-top:4px;">
+						<?php esc_html_e( 'Shortcode:', 'bmm-registration' ); ?>
+						<code style="user-select:all;"><?php echo esc_html( $bmm_sc ); ?></code>
+					</div>
 				</td>
 				<td><?php echo esc_html( get_the_date( 'Y-m-d', $form->ID ) ); ?></td>
 			</tr>

@@ -60,6 +60,36 @@ class BMM_Form_Editor {
 		} elseif ( $post->post_status === 'archived' ) {
 			echo '<p>' . esc_html__( 'This form is archived (closed to new registrations).', 'bmm-registration' ) . '</p>';
 		}
+
+		self::render_shortcode_help( $post );
+	}
+
+	/**
+	 * Show how to embed this form via the shortcode — in the classic editor,
+	 * the block editor (Shortcode block), or any widget/text area. Recommended
+	 * over the direct link because the host page renders with the full theme
+	 * (header, logo, footer, layout) on any theme, classic or block.
+	 */
+	private static function render_shortcode_help( \WP_Post $post ): void {
+		// Prefer the slug; fall back to the numeric ID for unslugged drafts.
+		$ref       = $post->post_name ? $post->post_name : (string) $post->ID;
+		$shortcode = '[bmm_registration form="' . $ref . '"]';
+
+		echo '<hr style="margin:14px 0;">';
+		echo '<p style="margin:0 0 4px;"><strong>' . esc_html__( 'Embed on a page or post', 'bmm-registration' ) . '</strong></p>';
+		echo '<p class="description" style="margin:0 0 6px;">'
+			. esc_html__( 'Recommended: add this shortcode to any Page or Post. The page renders with your full theme (header, logo, footer).', 'bmm-registration' )
+			. '</p>';
+
+		echo '<input type="text" readonly value="' . esc_attr( $shortcode ) . '" '
+			. 'onclick="this.select();" style="width:100%;font-family:monospace;padding:6px;" />';
+		echo '<button type="button" class="button" style="margin-top:6px;" '
+			. 'onclick="navigator.clipboard.writeText(' . wp_json_encode( $shortcode ) . ');this.textContent=' . wp_json_encode( __( 'Copied!', 'bmm-registration' ) ) . ';">'
+			. esc_html__( 'Copy Shortcode', 'bmm-registration' ) . '</button>';
+
+		echo '<p class="description" style="margin-top:8px;">'
+			. esc_html__( 'Block editor: add a “Shortcode” block and paste it. Classic editor: paste it directly into the content.', 'bmm-registration' )
+			. '</p>';
 	}
 
 	public static function add_preview_row_action( array $actions, \WP_Post $post ): array {
@@ -109,14 +139,6 @@ class BMM_Form_Editor {
 		// Credentials
 		update_post_meta( $post_id, '_bmm_form_mosad',     sanitize_text_field( $_POST['bmm_form_mosad'] ?? '' ) );
 		update_post_meta( $post_id, '_bmm_form_api_valid', sanitize_text_field( $_POST['bmm_form_api_valid'] ?? '' ) );
-
-		// Page template — validate against the theme's registered templates
-		$submitted_template = sanitize_text_field( $_POST['bmm_form_page_template'] ?? '' );
-		$valid_templates    = array_values( wp_get_theme()->get_page_templates() );
-		if ( $submitted_template && ! in_array( $submitted_template, $valid_templates, true ) ) {
-			$submitted_template = '';
-		}
-		update_post_meta( $post_id, '_bmm_form_page_template', $submitted_template );
 
 		// Sponsorships (repeater)
 		$sponsorships = [];
