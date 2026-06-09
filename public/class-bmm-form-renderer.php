@@ -68,6 +68,7 @@ class BMM_Form_Renderer {
 		if ( ! box ) { return; }
 		var out = [];
 		out.push( 'plugin version: <?php echo esc_js( BMM_REG_VERSION ); ?>' );
+		out.push( 'theme: <?php echo esc_js( wp_get_theme()->get( 'Name' ) ); ?> (block theme: <?php echo ( function_exists( 'wp_is_block_theme' ) && wp_is_block_theme() ) ? 'YES' : 'no'; ?>)' );
 		out.push( 'bmmConfig: ' + ( window.bmmConfig ? 'present' : 'MISSING' ) );
 		out.push( 'bmm-form.js loaded: ' + ( typeof window.bmmState !== 'undefined' ) );
 		out.push( 'bmm-pricing.js loaded: ' + ( typeof window.bmmFetchPrice === 'function' ) );
