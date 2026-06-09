@@ -3,6 +3,14 @@ defined( 'ABSPATH' ) || exit;
 
 class BMM_Post_Types {
 
+	/**
+	 * Bump this whenever the rewrite rules change. The auto-flush below
+	 * compares it against a stored option and re-flushes once on mismatch,
+	 * so plugin updates (which do NOT fire the activation hook) still take
+	 * effect without a manual Settings → Permalinks save.
+	 */
+	const REWRITE_VERSION = '2';
+
 	public static function register(): void {
 		self::register_form_cpt();
 		self::register_submission_cpt();
@@ -12,6 +20,19 @@ class BMM_Post_Types {
 		self::intercept_publish_status();
 		self::register_permalink_filter();
 		self::register_nav_menu_status_fix();
+		self::maybe_flush_rewrite_rules();
+	}
+
+	/**
+	 * Self-healing rewrite flush. Runs late on 'init' (after add_rewrite_rule()
+	 * has registered our rule) and flushes exactly once per REWRITE_VERSION.
+	 */
+	private static function maybe_flush_rewrite_rules(): void {
+		if ( get_option( 'bmm_rewrite_version' ) === self::REWRITE_VERSION ) {
+			return;
+		}
+		flush_rewrite_rules( false ); // soft flush — updates the rewrite_rules option only
+		update_option( 'bmm_rewrite_version', self::REWRITE_VERSION );
 	}
 
 	private static function register_form_cpt(): void {
@@ -105,11 +126,6 @@ class BMM_Post_Types {
 	}
 
 	/**
-	 * Remap WordPress's built-in 'publish' status to our custom 'published'
-	 * for bmm_reg_form posts. This fires whenever an admin uses the native WP
-	 * Publish button instead of our custom status controls.
-	 */
-	/**
 	 * The WordPress nav-menu meta box hardcodes post_status = 'publish'.
 	 * Our forms live at our custom 'published' status, so they're invisible
 	 * to that query. Expand the status array for any admin query on this CPT.
@@ -145,6 +161,11 @@ class BMM_Post_Types {
 		}, 10, 2 );
 	}
 
+	/**
+	 * Remap WordPress's built-in 'publish' status to our custom 'published'
+	 * for bmm_reg_form posts. This fires whenever an admin uses the native WP
+	 * Publish button instead of our custom status controls.
+	 */
 	private static function intercept_publish_status(): void {
 		add_action( 'transition_post_status', function ( string $new, string $old, \WP_Post $post ): void {
 			if ( $post->post_type !== 'bmm_reg_form' || $new !== 'publish' ) {
@@ -214,11 +235,16 @@ class BMM_Post_Types {
 			setup_postdata( $post );
 
 			// Tell WP this is a singular page so is_page() etc. return correctly.
+			// The main query found no real post for /register/{slug}/ and set
+			// is_404 = true (+ queued a 404 header); clear both so the theme
+			// renders our content with a 200 OK instead of "Page Not Found".
 			$wp_query->is_page     = true;
 			$wp_query->is_singular = true;
 			$wp_query->is_home     = false;
 			$wp_query->is_archive  = false;
+			$wp_query->is_404      = false;
 			$wp_query->queried_object = $post;
+			status_header( 200 );
 
 			// Inject the form HTML wherever the theme calls the_content().
 			add_filter( 'the_content', function () use ( $form_post ): string {
