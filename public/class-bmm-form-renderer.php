@@ -15,9 +15,16 @@ class BMM_Form_Renderer {
 			return '<div class="bmm-form-closed"><p>' . esc_html__( 'Registration for this form has closed.', 'bmm-registration' ) . '</p></div>';
 		}
 
-		// Draft: show to admin only
-		if ( $form->status === 'draft' && ! current_user_can( 'manage_options' ) ) {
-			return '<p>' . esc_html__( 'This registration form is not currently available.', 'bmm-registration' ) . '</p>';
+		// Draft: admins only — show a preview banner
+		if ( $form->status === 'draft' ) {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return '<p>' . esc_html__( 'This registration form is not currently available.', 'bmm-registration' ) . '</p>';
+			}
+			add_filter( 'bmm_form_before_html', function (): string {
+				return '<div class="bmm-draft-notice" style="background:#fcf8e3;border:1px solid #faebcc;color:#8a6d3b;padding:10px 14px;margin-bottom:16px;border-radius:3px;">'
+					. esc_html__( 'Admin preview — this form is a draft and not yet visible to the public.', 'bmm-registration' )
+					. '</div>';
+			} );
 		}
 
 		if ( ! $form->mosad || ! $form->api_valid ) {
@@ -64,6 +71,7 @@ class BMM_Form_Renderer {
 	}
 
 	private static function get_html( BMM_Form_Config $form ): string {
+		$before = apply_filters( 'bmm_form_before_html', '' );
 		ob_start();
 		$steps = [
 			1 => __( 'Personal Info', 'bmm-registration' ),
@@ -74,6 +82,6 @@ class BMM_Form_Renderer {
 			6 => __( 'Complete Payment', 'bmm-registration' ),
 		];
 		require BMM_REG_DIR . 'public/views/form-wrapper.php';
-		return ob_get_clean();
+		return $before . ob_get_clean();
 	}
 }

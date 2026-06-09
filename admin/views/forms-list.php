@@ -43,7 +43,7 @@
 					<?php elseif ( $form->post_status === 'archived' ) : ?>
 						<span class="description"><?php esc_html_e( 'Archived (closed)', 'bmm-registration' ); ?></span>
 					<?php else : ?>
-						<span class="description"><?php esc_html_e( 'Draft (not public)', 'bmm-registration' ); ?></span>
+						<a href="<?php echo esc_url( $public_url ); ?>" target="_blank"><?php esc_html_e( 'Preview (draft)', 'bmm-registration' ); ?></a>
 					<?php endif; ?>
 				</td>
 				<td><?php echo esc_html( get_the_date( 'Y-m-d', $form->ID ) ); ?></td>
