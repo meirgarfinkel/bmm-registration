@@ -28,13 +28,6 @@ define( 'BMM_REG_VERSION', '1.0.2' );
 
 3. Include the version bump in the same commit as the feature/fix (not a separate commit).
 
-## Private repo / GitHub token
-
-If the site's repo is private, define this constant in `wp-config.php`:
-```php
-define( 'BMM_GITHUB_TOKEN', 'github_pat_...' );
-```
-
 ## Tracked branch
 
 The update checker watches the `tevi` branch. Once development stabilises and `tevi` is

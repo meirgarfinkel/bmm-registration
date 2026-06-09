@@ -24,9 +24,6 @@ $bmm_updater = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker
 	'bmm-registration'
 );
 $bmm_updater->setBranch( 'tevi' );
-if ( defined( 'BMM_GITHUB_TOKEN' ) && BMM_GITHUB_TOKEN ) {
-	$bmm_updater->setAuthentication( BMM_GITHUB_TOKEN );
-}
 unset( $bmm_updater );
 define( 'BMM_REG_FILE', __FILE__ );
 define( 'BMM_REG_DIR', plugin_dir_path( __FILE__ ) );
