@@ -9,7 +9,7 @@ class BMM_Post_Types {
 	 * so plugin updates (which do NOT fire the activation hook) still take
 	 * effect without a manual Settings → Permalinks save.
 	 */
-	const REWRITE_VERSION = '3';
+	const REWRITE_VERSION = '4';
 
 	public static function register(): void {
 		self::register_form_cpt();
@@ -197,7 +197,7 @@ class BMM_Post_Types {
 	public static function add_rewrite_rule(): void {
 		add_rewrite_rule(
 			'^membership/([^/]+)/?$',
-			'index.php?bmm_form=$1',
+			'index.php?bmm_form=$matches[1]', // WP uses $matches[N], NOT $N (that is Apache syntax)
 			'top'
 		);
 	}
@@ -213,9 +213,9 @@ class BMM_Post_Types {
 		// query var directly. This is the authoritative router; the rewrite
 		// rule is kept only as a belt-and-suspenders for pretty-permalink envs.
 		add_filter( 'request', function ( array $qv ): array {
-			if ( ! empty( $qv['bmm_form'] ) ) {
-				return $qv; // rewrite rule already resolved it
-			}
+			// Always derive the slug from the path when it matches. This is
+			// authoritative: it overrides any value the rewrite rule produced
+			// (e.g. an unsubstituted "$1"/"$matches[1]" placeholder).
 			$path = isset( $_SERVER['REQUEST_URI'] )
 				? (string) wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH )
 				: '';
