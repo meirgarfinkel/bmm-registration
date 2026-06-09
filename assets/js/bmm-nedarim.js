@@ -47,8 +47,15 @@
 		window.addEventListener( 'message', onMessage, false );
 
 		document.addEventListener( 'click', function ( e ) {
-			if ( e.target && e.target.id === 'bmm-retry-payment' ) {
-				loadIframe( nedarimData );
+			if ( ! e.target ) return;
+			// "Pay" — the customer has entered their card; now execute the charge.
+			if ( e.target.id === 'bmm-pay-now' ) {
+				startPayment();
+			}
+			// "Try Again" after an error — let them re-submit the entered card.
+			if ( e.target.id === 'bmm-retry-payment' ) {
+				clearStatus();
+				showPayButton();
 			}
 		} );
 	}
@@ -70,14 +77,36 @@
 		}
 
 		dataSent = false;
-		// Send the transaction parameters once the iframe document has loaded.
-		f.onload = function () { sendPaymentData(); };
+		// DO NOT send the transaction params on load — FinishTransaction2
+		// executes the charge immediately, which fails ("invalid card number")
+		// before the customer types anything. Instead, reveal a Pay button once
+		// the iframe (card fields) has loaded.
+		f.onload = function () { showPayButton(); };
 		f.src = src;
 
 		wrap.hidden = false;
+		clearStatus();
+	}
+
+	function showPayButton() {
+		const btn = document.getElementById( 'bmm-pay-now' );
+		if ( ! btn ) return;
+		const total = nedarimData && nedarimData.total ? nedarimData.total : '';
+		btn.textContent = total ? ( 'Pay ₪' + total ) : 'Pay';
+		btn.disabled = false;
+		btn.hidden = false;
+	}
+
+	function startPayment() {
+		const btn = document.getElementById( 'bmm-pay-now' );
+		if ( btn ) {
+			btn.disabled = true;
+		}
+		dataSent = false;
 		setStatus( window.bmmConfig && window.bmmConfig.i18n && window.bmmConfig.i18n.processing
 			? window.bmmConfig.i18n.processing
-			: 'Loading secure payment form…' );
+			: 'Processing payment…' );
+		sendPaymentData();
 	}
 
 	// ── postMessage handler ─────────────────────────────────────────────────────
@@ -95,11 +124,6 @@
 		switch ( d.Name ) {
 			case 'Height':
 				setIframeHeight( parseInt( d.Value, 10 ) );
-				// First Height message proves the iframe's JS is running; make
-				// sure it has received the transaction parameters.
-				if ( ! dataSent ) {
-					sendPaymentData();
-				}
 				break;
 
 			case 'TransactionResponse':
@@ -186,9 +210,10 @@
 			const errMsg = result.Message || result.Error
 				|| ( window.bmmConfig && window.bmmConfig.i18n && window.bmmConfig.i18n.paymentError )
 				|| 'Payment failed.';
-			// Allow another attempt — reset so the params re-send on retry.
+			// Let the customer correct the card in the iframe and pay again.
 			dataSent = false;
-			setStatus( errMsg + ' <button id="bmm-retry-payment" class="bmm-btn bmm-btn--secondary bmm-btn--sm">Try Again</button>' );
+			setStatus( errMsg );
+			showPayButton();
 		}
 	}
 

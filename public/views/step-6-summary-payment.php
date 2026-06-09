@@ -23,14 +23,19 @@
 
 <!-- Nedarim Plus iframe container -->
 <div class="bmm-iframe-wrap" id="bmm-iframe-wrap" hidden>
-	<p class="description"><?php esc_html_e( 'Complete your payment securely below. The total amount has been pre-filled and cannot be changed.', 'bmm-registration' ); ?></p>
+	<p class="description"><?php esc_html_e( 'Enter your credit card details below, then click Pay. The total amount is pre-filled and cannot be changed.', 'bmm-registration' ); ?></p>
 	<iframe
 		id="bmm-nedarim-iframe"
 		src="about:blank"
-		style="width:100%;min-height:500px;border:none;"
+		style="width:100%;min-height:300px;border:none;"
 		title="<?php esc_attr_e( 'Secure Payment', 'bmm-registration' ); ?>"
 		aria-label="<?php esc_attr_e( 'Nedarim Plus secure payment form', 'bmm-registration' ); ?>"
 	></iframe>
+	<div class="bmm-pay-now-wrap" style="text-align:center;margin-top:1rem;">
+		<button type="button" class="bmm-btn bmm-btn--primary" id="bmm-pay-now" hidden>
+			<?php esc_html_e( 'Pay', 'bmm-registration' ); ?>
+		</button>
+	</div>
 </div>
 
 <!-- Success message (shown after payment completes) -->
