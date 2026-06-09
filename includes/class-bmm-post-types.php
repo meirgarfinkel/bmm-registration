@@ -147,6 +147,19 @@ class BMM_Post_Types {
 			}
 			return $object;
 		}, 11 ); // after core's _wp_nav_menu_meta_box_object (priority 10)
+
+		// WordPress hides custom-post-type panels on the Menus screen by default
+		// (the user would otherwise have to enable "Registration Forms" under
+		// Screen Options). Force our panel visible so the form is selectable.
+		add_filter( 'hidden_meta_boxes', function ( $hidden, $screen ) {
+			if ( isset( $screen->id ) && $screen->id === 'nav-menus' ) {
+				$key = array_search( 'add-post-type-bmm_reg_form', (array) $hidden, true );
+				if ( false !== $key ) {
+					unset( $hidden[ $key ] );
+				}
+			}
+			return $hidden;
+		}, 10, 2 );
 	}
 
 	/**
