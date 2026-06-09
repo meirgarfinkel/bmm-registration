@@ -25,7 +25,7 @@
 			$sub_count_q = new WP_Query( [ 'post_type' => 'bmm_submission', 'post_parent' => $form->ID, 'post_status' => [ 'bmm_pending', 'completed', 'failed' ], 'posts_per_page' => -1, 'fields' => 'ids' ] );
 			$sub_count = $sub_count_q->found_posts;
 			$public_url = add_query_arg( 'bmm_form', $form->post_name ?: $form->ID, home_url( '/' ) );
-			$status_label = ucfirst( $form->post_status );
+			$status_label = ( $form->post_status === 'publish' ) ? 'Published' : ucfirst( $form->post_status );
 		?>
 			<tr>
 				<td>
@@ -38,7 +38,7 @@
 				<td><span class="bmm-status bmm-status--<?php echo esc_attr( $form->post_status ); ?>"><?php echo esc_html( $status_label ); ?></span></td>
 				<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=bmm-submissions&form_id=' . $form->ID ) ); ?>"><?php echo esc_html( $sub_count ); ?></a></td>
 				<td>
-					<?php if ( $form->post_status === 'published' ) : ?>
+					<?php if ( in_array( $form->post_status, [ 'published', 'publish' ], true ) ) : ?>
 						<a href="<?php echo esc_url( $public_url ); ?>" target="_blank"><?php echo esc_html( $public_url ); ?></a>
 					<?php elseif ( $form->post_status === 'archived' ) : ?>
 						<span class="description"><?php esc_html_e( 'Archived (closed)', 'bmm-registration' ); ?></span>

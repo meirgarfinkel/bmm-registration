@@ -8,6 +8,7 @@ class BMM_Post_Types {
 		self::register_submission_cpt();
 		self::register_custom_statuses();
 		self::add_query_var();
+		self::intercept_publish_status();
 	}
 
 	private static function register_form_cpt(): void {
@@ -97,6 +98,29 @@ class BMM_Post_Types {
 			'show_in_admin_status_list' => true,
 			'label_count'               => _n_noop( 'Failed <span class="count">(%s)</span>', 'Failed <span class="count">(%s)</span>', 'bmm-registration' ),
 		] );
+	}
+
+	/**
+	 * Remap WordPress's built-in 'publish' status to our custom 'published'
+	 * for bmm_reg_form posts. This fires whenever an admin uses the native WP
+	 * Publish button instead of our custom status controls.
+	 */
+	private static function intercept_publish_status(): void {
+		add_action( 'transition_post_status', function ( string $new, string $old, \WP_Post $post ): void {
+			if ( $post->post_type !== 'bmm_reg_form' || $new !== 'publish' ) {
+				return;
+			}
+			// Use a direct DB write to avoid re-triggering this same hook.
+			global $wpdb;
+			$wpdb->update(
+				$wpdb->posts,
+				[ 'post_status' => 'published' ],
+				[ 'ID' => $post->ID ],
+				[ '%s' ],
+				[ '%d' ]
+			);
+			clean_post_cache( $post->ID );
+		}, 10, 3 );
 	}
 
 	private static function add_query_var(): void {

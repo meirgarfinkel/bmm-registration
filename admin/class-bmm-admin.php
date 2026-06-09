@@ -45,7 +45,7 @@ class BMM_Admin {
 	public static function render_forms_list(): void {
 		$forms = get_posts( [
 			'post_type'      => 'bmm_reg_form',
-			'post_status'    => [ 'draft', 'published', 'archived' ],
+			'post_status'    => [ 'draft', 'publish', 'published', 'archived' ],
 			'posts_per_page' => -1,
 			'orderby'        => 'date',
 			'order'          => 'DESC',

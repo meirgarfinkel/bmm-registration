@@ -64,7 +64,9 @@ class BMM_Form_Config {
 	}
 
 	public function is_published(): bool {
-		return $this->status === 'published';
+		// Accept both our custom 'published' and WP's built-in 'publish' (which
+		// the intercept hook will remap, but we handle it here as a safety net).
+		return in_array( $this->status, [ 'published', 'publish' ], true );
 	}
 
 	/**
@@ -80,7 +82,7 @@ class BMM_Form_Config {
 
 		$posts = get_posts( [
 			'post_type'      => 'bmm_reg_form',
-			'post_status'    => [ 'published', 'archived', 'draft' ],
+			'post_status'    => [ 'publish', 'published', 'archived', 'draft' ],
 			'name'           => $slug,
 			'posts_per_page' => 1,
 			'fields'         => 'all',
