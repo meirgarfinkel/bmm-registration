@@ -48,13 +48,19 @@ class BMM_Form_Renderer {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return '';
 		}
-		$price_ep  = esc_url_raw( rest_url( 'bmm/v1/calculate-price' ) );
-		$submit_ep = esc_url_raw( rest_url( 'bmm/v1/submit' ) );
-		$fid       = (int) $form->post_id;
+		$price_ep    = esc_url_raw( rest_url( 'bmm/v1/calculate-price' ) );
+		$submit_ep   = esc_url_raw( rest_url( 'bmm/v1/submit' ) );
+		$simulate_ep = esc_url_raw( rest_url( 'bmm/v1/simulate-callback' ) );
+		$rest_nonce  = wp_create_nonce( 'wp_rest' );
+		$fid         = (int) $form->post_id;
 
 		ob_start();
 		?>
 <div id="bmm-admin-diagnostic" style="margin-top:24px;padding:12px 16px;border:1px dashed #b58105;background:#fffbe6;color:#5b4708;font:12px/1.6 monospace;white-space:pre-wrap;">BMM diagnostic (visible to admins only) — running…</div>
+<div style="margin-top:8px;">
+	<button type="button" id="bmm-simulate-callback" class="bmm-btn bmm-btn--secondary bmm-btn--sm">Simulate Nedarim callback (creates a TEST submission)</button>
+	<div id="bmm-simulate-result" style="margin-top:8px;font:12px/1.6 monospace;white-space:pre-wrap;color:#5b4708;"></div>
+</div>
 <script>
 ( function () {
 	window.addEventListener( 'load', function () {
@@ -116,6 +122,37 @@ class BMM_Form_Renderer {
 			box.textContent += '\n\nsubmit (dry-run) → HTTP ' + r.status + '\n' + t.slice( 0, 400 );
 		} ); } )
 		.catch( function ( e ) { box.textContent += '\n\nsubmit (dry-run) → FETCH ERROR: ' + e; } );
+
+		// "Simulate Nedarim callback" button: creates a TEST submission and runs
+		// the real completion path, so the post-payment flow can be verified
+		// without a live card. Admin-only endpoint, authenticated via wp_rest nonce.
+		var simBtn = document.getElementById( 'bmm-simulate-callback' );
+		var simOut = document.getElementById( 'bmm-simulate-result' );
+		if ( simBtn && simOut ) {
+			simBtn.addEventListener( 'click', function () {
+				simBtn.disabled = true;
+				simOut.textContent = 'Simulating…';
+				fetch( <?php echo wp_json_encode( $simulate_ep ); ?>, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-WP-Nonce': <?php echo wp_json_encode( $rest_nonce ); ?>
+					},
+					body: JSON.stringify( { form_id: <?php echo $fid; ?> } )
+				} )
+				.then( function ( r ) { return r.text().then( function ( t ) {
+					simOut.textContent = 'simulate-callback → HTTP ' + r.status + '\n' + t;
+					try {
+						var j = JSON.parse( t );
+						if ( j.admin_link ) {
+							simOut.innerHTML += '<br><a href="' + j.admin_link + '" target="_blank">View the TEST submission in admin →</a>';
+						}
+					} catch ( e ) {}
+					simBtn.disabled = false;
+				} ); } )
+				.catch( function ( e ) { simOut.textContent = 'FETCH ERROR: ' + e; simBtn.disabled = false; } );
+			} );
+		}
 	} );
 } )();
 </script>
