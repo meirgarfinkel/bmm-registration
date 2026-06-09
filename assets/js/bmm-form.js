@@ -444,10 +444,21 @@
 			if ( ! saved ) return;
 			const data = JSON.parse( saved );
 			Object.assign( state.formData, data );
-			// Re-populate fields
+			// Re-populate fields. Radios/checkboxes must be restored by *checking*
+			// the input whose value matches — NOT by setting .value on the first
+			// element of the group, which would corrupt its value (e.g. overwriting
+			// the "Pay in full" radio's value with "Tashlumim" and making it submit
+			// as installments).
 			Object.entries( data ).forEach( ( [ name, value ] ) => {
-				const el = wrap.querySelector( `[name="${ name }"]` );
-				if ( el && typeof value === 'string' ) el.value = value;
+				if ( typeof value !== 'string' ) return;
+				const els = wrap.querySelectorAll( `[name="${ name }"]` );
+				if ( ! els.length ) return;
+				const first = els[ 0 ];
+				if ( first.type === 'radio' || first.type === 'checkbox' ) {
+					els.forEach( el => { el.checked = ( el.value === value ); } );
+				} else {
+					first.value = value;
+				}
 			} );
 		} catch ( e ) {}
 	}
