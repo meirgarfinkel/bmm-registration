@@ -45,6 +45,7 @@ class BMM_Plugin {
 
 	public static function activate(): void {
 		BMM_Post_Types::register();
+		BMM_Post_Types::add_rewrite_rule();
 		flush_rewrite_rules();
 	}
 

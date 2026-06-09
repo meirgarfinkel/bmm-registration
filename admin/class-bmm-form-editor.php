@@ -41,16 +41,18 @@ class BMM_Form_Editor {
 		require BMM_REG_DIR . 'admin/views/form-editor.php';
 	}
 
-	/** Returns the preview/public URL for a form post, using ID when no slug exists yet. */
+	/** Returns the pretty /register/{slug}/ URL, or ?bmm_form={ID} for unslugged drafts. */
 	private static function form_url( \WP_Post $post ): string {
-		$identifier = $post->post_name ?: (string) $post->ID;
-		return add_query_arg( 'bmm_form', $identifier, home_url( '/' ) );
+		if ( $post->post_name ) {
+			return home_url( '/register/' . $post->post_name . '/' );
+		}
+		return add_query_arg( 'bmm_form', (string) $post->ID, home_url( '/' ) );
 	}
 
 	public static function render_link_meta_box( \WP_Post $post ): void {
 		$url = self::form_url( $post );
 
-		if ( $post->post_status === 'published' ) {
+		if ( in_array( $post->post_status, [ 'published', 'publish' ], true ) ) {
 			echo '<p><a href="' . esc_url( $url ) . '" target="_blank">' . esc_html( $url ) . '</a></p>';
 			echo '<button type="button" class="button" onclick="navigator.clipboard.writeText(\'' . esc_js( $url ) . '\')">' . esc_html__( 'Copy Link', 'bmm-registration' ) . '</button>';
 		} elseif ( $post->post_status === 'draft' ) {

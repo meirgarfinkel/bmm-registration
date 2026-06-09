@@ -123,7 +123,23 @@ class BMM_Post_Types {
 		}, 10, 3 );
 	}
 
+	/**
+	 * Pretty-URL rewrite rule: /register/{slug}/ → ?bmm_form={slug}
+	 * Gives forms a clean path that WordPress menus and share links accept.
+	 * The query-var path (?bmm_form=) continues to work alongside it.
+	 */
+	public static function add_rewrite_rule(): void {
+		add_rewrite_rule(
+			'^register/([^/]+)/?$',
+			'index.php?bmm_form=$1',
+			'top'
+		);
+	}
+
 	private static function add_query_var(): void {
+		// Register the rewrite rule on 'init' (same action as register()).
+		add_action( 'init', [ self::class, 'add_rewrite_rule' ] );
+
 		add_filter( 'query_vars', function ( array $vars ): array {
 			$vars[] = 'bmm_form';
 			return $vars;
