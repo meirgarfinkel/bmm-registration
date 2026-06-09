@@ -111,7 +111,7 @@ class BMM_Form_Config {
 	public function get_public_url(): string {
 		if ( $this->slug ) {
 			// Clean pretty-URL — works in WP menus, shareable, no query string.
-			return home_url( '/register/' . $this->slug . '/' );
+			return home_url( '/membership/' . $this->slug . '/' );
 		}
 		// Unslugged draft (no post_name yet): fall back to query-string by ID.
 		return add_query_arg( 'bmm_form', (string) $this->post_id, home_url( '/' ) );

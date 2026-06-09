@@ -25,7 +25,7 @@
 			$sub_count_q = new WP_Query( [ 'post_type' => 'bmm_submission', 'post_parent' => $form->ID, 'post_status' => [ 'bmm_pending', 'completed', 'failed' ], 'posts_per_page' => -1, 'fields' => 'ids' ] );
 			$sub_count = $sub_count_q->found_posts;
 			$public_url = $form->post_name
-				? home_url( '/register/' . $form->post_name . '/' )
+				? home_url( '/membership/' . $form->post_name . '/' )
 				: add_query_arg( 'bmm_form', $form->ID, home_url( '/' ) );
 			$status_label = ( $form->post_status === 'publish' ) ? 'Published' : ucfirst( $form->post_status );
 		?>

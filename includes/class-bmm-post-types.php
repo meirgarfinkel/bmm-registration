@@ -9,7 +9,7 @@ class BMM_Post_Types {
 	 * so plugin updates (which do NOT fire the activation hook) still take
 	 * effect without a manual Settings → Permalinks save.
 	 */
-	const REWRITE_VERSION = '2';
+	const REWRITE_VERSION = '3';
 
 	public static function register(): void {
 		self::register_form_cpt();
@@ -159,7 +159,7 @@ class BMM_Post_Types {
 				return $url;
 			}
 			if ( $post->post_name ) {
-				return home_url( '/register/' . $post->post_name . '/' );
+				return home_url( '/membership/' . $post->post_name . '/' );
 			}
 			// Unslugged draft — keep query-string fallback
 			return add_query_arg( 'bmm_form', $post->ID, home_url( '/' ) );
@@ -190,13 +190,13 @@ class BMM_Post_Types {
 	}
 
 	/**
-	 * Pretty-URL rewrite rule: /register/{slug}/ → ?bmm_form={slug}
+	 * Pretty-URL rewrite rule: /membership/{slug}/ → ?bmm_form={slug}
 	 * Gives forms a clean path that WordPress menus and share links accept.
 	 * The query-var path (?bmm_form=) continues to work alongside it.
 	 */
 	public static function add_rewrite_rule(): void {
 		add_rewrite_rule(
-			'^register/([^/]+)/?$',
+			'^membership/([^/]+)/?$',
 			'index.php?bmm_form=$1',
 			'top'
 		);
@@ -209,7 +209,7 @@ class BMM_Post_Types {
 		} );
 
 		// Path-based routing that does NOT depend on the rewrite rule being
-		// flushed. If the request path is /register/{slug}/, set the bmm_form
+		// flushed. If the request path is /membership/{slug}/, set the bmm_form
 		// query var directly. This is the authoritative router; the rewrite
 		// rule is kept only as a belt-and-suspenders for pretty-permalink envs.
 		add_filter( 'request', function ( array $qv ): array {
@@ -219,7 +219,7 @@ class BMM_Post_Types {
 			$path = isset( $_SERVER['REQUEST_URI'] )
 				? (string) wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH )
 				: '';
-			if ( $path && preg_match( '#(?:^|/)register/([^/]+)/?$#i', $path, $m ) ) {
+			if ( $path && preg_match( '#(?:^|/)membership/([^/]+)/?$#i', $path, $m ) ) {
 				// Replace the query vars entirely so WP does not build a 404 query.
 				return [ 'bmm_form' => urldecode( $m[1] ) ];
 			}

@@ -41,10 +41,10 @@ class BMM_Form_Editor {
 		require BMM_REG_DIR . 'admin/views/form-editor.php';
 	}
 
-	/** Returns the pretty /register/{slug}/ URL, or ?bmm_form={ID} for unslugged drafts. */
+	/** Returns the pretty /membership/{slug}/ URL, or ?bmm_form={ID} for unslugged drafts. */
 	private static function form_url( \WP_Post $post ): string {
 		if ( $post->post_name ) {
-			return home_url( '/register/' . $post->post_name . '/' );
+			return home_url( '/membership/' . $post->post_name . '/' );
 		}
 		return add_query_arg( 'bmm_form', (string) $post->ID, home_url( '/' ) );
 	}
