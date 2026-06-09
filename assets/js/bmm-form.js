@@ -21,6 +21,7 @@
 
 	// ── DOM refs ──────────────────────────────────────────────────────────────
 	let wrap, steps, stepEls, prevBtn, nextBtn, submitBtn, errorEl;
+	let submitting = false; // guards against double / re-entrant submits
 
 	function init() {
 		wrap      = document.getElementById( 'bmm-registration' );
@@ -78,19 +79,28 @@
 		} );
 
 		prevBtn.hidden   = n === 1;
-		nextBtn.hidden   = n >= state.totalSteps;
-		submitBtn.hidden = n !== state.totalSteps - 1; // step 5
+		// Hide "Next" on step 5 AND 6. Step 5's only forward action is the
+		// "Proceed to Payment" button, which submits and loads the payment
+		// iframe. Previously "Next" also showed on step 5, so clicking it
+		// skipped the submit and landed on an empty step 6 with no iframe.
+		nextBtn.hidden   = n >= state.totalSteps - 1;
+		submitBtn.hidden = n !== state.totalSteps - 1; // "Proceed to Payment" only on step 5
 
 		// Refresh pricing whenever the user reaches step 3 or 5
 		if ( ( n === 3 || n === 5 ) && typeof window.bmmFetchPrice === 'function' ) {
 			window.bmmFetchPrice();
 		}
 
-		// When entering step 6, trigger summary build
+		// Step 6 (payment): a submission must exist for the iframe to load.
+		// If we somehow arrive without one, submit now. The submissionId and
+		// submitting guards prevent a double submit on the normal
+		// "Proceed to Payment" → submitToServer → showStep(6) flow.
 		if ( n === state.totalSteps ) {
 			nextBtn.hidden   = true;
 			submitBtn.hidden = true;
-			if ( typeof window.bmmBuildSummary === 'function' ) {
+			if ( ! state.submissionId && ! submitting ) {
+				submitToServer();
+			} else if ( typeof window.bmmBuildSummary === 'function' ) {
 				window.bmmBuildSummary();
 			}
 		}
@@ -197,6 +207,9 @@
 	// ── Server submission ──────────────────────────────────────────────────────
 
 	async function submitToServer() {
+		if ( submitting || state.submissionId ) return; // never submit twice
+		submitting = true;
+
 		// Collect step 5 before submitting
 		collectStep( 5 );
 
@@ -229,6 +242,7 @@
 				showError( msg );
 				submitBtn.disabled = false;
 				submitBtn.textContent = 'Proceed to Payment';
+				submitting = false;
 				return;
 			}
 
@@ -245,6 +259,7 @@
 			showError( 'Network error. Please try again.' );
 			submitBtn.disabled = false;
 			submitBtn.textContent = 'Proceed to Payment';
+			submitting = false;
 		}
 	}
 
