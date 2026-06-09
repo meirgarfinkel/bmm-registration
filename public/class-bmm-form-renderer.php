@@ -35,7 +35,57 @@ class BMM_Form_Renderer {
 		}
 
 		self::enqueue_assets( $form );
-		return self::get_html( $form );
+		return self::get_html( $form ) . self::admin_diagnostic( $form );
+	}
+
+	/**
+	 * Admin-only on-page diagnostic. Surfaces whether the JS config/scripts
+	 * loaded and what the live price REST endpoint actually returns, so the
+	 * cause of "subtotals/payment not working" is unambiguous. Renders nothing
+	 * for non-admins.
+	 */
+	private static function admin_diagnostic( BMM_Form_Config $form ): string {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return '';
+		}
+		$price_ep  = esc_url_raw( rest_url( 'bmm/v1/calculate-price' ) );
+		$submit_ep = esc_url_raw( rest_url( 'bmm/v1/submit' ) );
+		$fid       = (int) $form->post_id;
+
+		ob_start();
+		?>
+<div id="bmm-admin-diagnostic" style="margin-top:24px;padding:12px 16px;border:1px dashed #b58105;background:#fffbe6;color:#5b4708;font:12px/1.6 monospace;white-space:pre-wrap;">BMM diagnostic (visible to admins only) — running…</div>
+<script>
+( function () {
+	window.addEventListener( 'load', function () {
+		var box = document.getElementById( 'bmm-admin-diagnostic' );
+		if ( ! box ) { return; }
+		var out = [];
+		out.push( 'bmmConfig: ' + ( window.bmmConfig ? 'present' : 'MISSING' ) );
+		if ( window.bmmConfig ) {
+			out.push( 'formId: ' + window.bmmConfig.formId );
+			out.push( 'priceEndpoint: ' + window.bmmConfig.priceEndpoint );
+			out.push( 'submitEndpoint: ' + window.bmmConfig.submitEndpoint );
+			out.push( 'nonce: ' + ( window.bmmConfig.nonce ? 'present' : 'MISSING' ) );
+		}
+		out.push( 'bmm-form.js loaded: ' + ( typeof window.bmmState !== 'undefined' ) );
+		out.push( 'bmm-pricing.js loaded: ' + ( typeof window.bmmFetchPrice === 'function' ) );
+		box.textContent = out.join( '\n' );
+
+		fetch( <?php echo wp_json_encode( $price_ep ); ?>, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify( { form_id: <?php echo $fid; ?>, wants_membership: true, seats_men: {}, seats_women: {}, sponsorship_ids: [] } )
+		} )
+		.then( function ( r ) { return r.text().then( function ( t ) {
+			box.textContent += '\n\nprice endpoint → HTTP ' + r.status + '\n' + t.slice( 0, 500 );
+		} ); } )
+		.catch( function ( e ) { box.textContent += '\n\nprice endpoint → FETCH ERROR: ' + e; } );
+	} );
+} )();
+</script>
+		<?php
+		return (string) ob_get_clean();
 	}
 
 	public static function enqueue_assets( BMM_Form_Config $form ): void {
