@@ -48,6 +48,19 @@ class BMM_REST_Submit extends \WP_REST_Controller {
 		// Calculate authoritative price
 		$pricing = BMM_Pricing::calculate( $form, $data );
 
+		// Dry run (diagnostic): validate + price + report config WITHOUT
+		// creating a submission record. Lets the admin diagnostic confirm the
+		// submit path works end-to-end without polluting the database.
+		if ( ! empty( $data['dry_run'] ) ) {
+			return new \WP_REST_Response( [
+				'dry_run'      => true,
+				'total'        => $pricing['total'],
+				'mosad'        => $form->mosad ?: '(empty)',
+				'api_valid'    => $form->api_valid ? '(set)' : '(empty)',
+				'payment_type' => in_array( $data['payment_type'] ?? 'Ragil', [ 'Ragil', 'HK' ], true ) ? $data['payment_type'] : 'Ragil',
+			], 200 );
+		}
+
 		// Create submission
 		try {
 			$submission_id = BMM_Submission::create_draft( $form_id, $data, $pricing );

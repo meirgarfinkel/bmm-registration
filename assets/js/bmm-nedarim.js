@@ -14,6 +14,9 @@
 ( function () {
 	'use strict';
 
+	// Load marker for the admin diagnostic.
+	window.bmmNedarimLoaded = true;
+
 	const NEDARIM_IFRAME_URL = 'https://www.matara.pro/nedarimplus/iframe/';
 	const NEDARIM_ORIGIN     = 'https://www.matara.pro';
 

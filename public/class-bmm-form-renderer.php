@@ -65,6 +65,7 @@ class BMM_Form_Renderer {
 		out.push( 'bmmConfig: ' + ( window.bmmConfig ? 'present' : 'MISSING' ) );
 		out.push( 'bmm-form.js loaded: ' + ( typeof window.bmmState !== 'undefined' ) );
 		out.push( 'bmm-pricing.js loaded: ' + ( typeof window.bmmFetchPrice === 'function' ) );
+		out.push( 'bmm-nedarim.js loaded: ' + ( window.bmmNedarimLoaded === true ) );
 
 		// Duplicate-render check: these MUST be 1. More than one means the form
 		// was rendered twice, which breaks all JS via duplicate element IDs.
@@ -95,6 +96,26 @@ class BMM_Form_Renderer {
 				mcb.checked = wasChecked;
 			}, 1500 );
 		}
+
+		// Exercise the /submit path in dry-run mode (no DB write) with dummy
+		// valid data, so we can see whether submit would succeed and return the
+		// Nedarim config the iframe needs. This is the gate before step 6.
+		fetch( <?php echo wp_json_encode( $submit_ep ); ?>, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify( {
+				form_id: <?php echo $fid; ?>,
+				dry_run: true,
+				first_name: 'Test', last_name: 'Test', phone: '0500000000',
+				email: 'test@example.com', hebrew_name: 'בדיקה', tribe: 'yisrael',
+				payment_type: 'Ragil', wants_membership: true,
+				seats_men: {}, seats_women: {}, sponsorship_ids: []
+			} )
+		} )
+		.then( function ( r ) { return r.text().then( function ( t ) {
+			box.textContent += '\n\nsubmit (dry-run) → HTTP ' + r.status + '\n' + t.slice( 0, 400 );
+		} ); } )
+		.catch( function ( e ) { box.textContent += '\n\nsubmit (dry-run) → FETCH ERROR: ' + e; } );
 	} );
 } )();
 </script>
