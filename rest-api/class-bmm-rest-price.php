@@ -30,8 +30,10 @@ class BMM_REST_Price extends \WP_REST_Controller {
 			return new \WP_Error( 'invalid_form', __( 'Form not found.', 'bmm-registration' ), [ 'status' => 404 ] );
 		}
 
-		if ( ! $form->is_published() ) {
-			return new \WP_Error( 'form_not_published', __( 'Form is not available.', 'bmm-registration' ), [ 'status' => 403 ] );
+		// Reject only archived forms. Draft forms are allowed so that admin
+		// preview pages can still calculate live pricing.
+		if ( $form->status === 'archived' ) {
+			return new \WP_Error( 'form_archived', __( 'Form is not available.', 'bmm-registration' ), [ 'status' => 403 ] );
 		}
 
 		$data    = $request->get_params();

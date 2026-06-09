@@ -310,6 +310,15 @@
 	padding: 0 0.3rem;
 }
 
+/* ── Enforce hidden attribute (some themes override the browser default) ─── */
+
+#bmm-prev[hidden],
+#bmm-next[hidden],
+#bmm-submit-btn[hidden] { display: none !important; }
+
+.bmm-pricing-preview__row[hidden],
+.bmm-summary-row[hidden] { display: none !important; }
+
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 
 .bmm-btn {

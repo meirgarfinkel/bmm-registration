@@ -49,7 +49,10 @@
 		try {
 			const res = await fetch( cfg.priceEndpoint, {
 				method:  'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: {
+					'Content-Type': 'application/json',
+					'X-WP-Nonce':   cfg.nonce || '',
+				},
 				body:    JSON.stringify( {
 					form_id:          cfg.formId,
 					wants_membership: wantsMembership,
