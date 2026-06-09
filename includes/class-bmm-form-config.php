@@ -67,7 +67,17 @@ class BMM_Form_Config {
 		return $this->status === 'published';
 	}
 
+	/**
+	 * Look up a bmm_reg_form post by slug or numeric post ID.
+	 * Drafts without a slug yet are accessed via their numeric ID.
+	 */
 	public static function get_by_slug( string $slug ): ?\WP_Post {
+		// Numeric ID fallback — used for drafts that have no slug yet.
+		if ( ctype_digit( $slug ) ) {
+			$post = get_post( (int) $slug );
+			return ( $post && $post->post_type === 'bmm_reg_form' ) ? $post : null;
+		}
+
 		$posts = get_posts( [
 			'post_type'      => 'bmm_reg_form',
 			'post_status'    => [ 'published', 'archived', 'draft' ],
@@ -79,6 +89,8 @@ class BMM_Form_Config {
 	}
 
 	public function get_public_url(): string {
-		return add_query_arg( 'bmm_form', $this->slug, home_url( '/' ) );
+		// Use the slug when available; fall back to numeric ID for unslugged drafts.
+		$identifier = $this->slug ?: (string) $this->post_id;
+		return add_query_arg( 'bmm_form', $identifier, home_url( '/' ) );
 	}
 }

@@ -41,18 +41,22 @@ class BMM_Form_Editor {
 		require BMM_REG_DIR . 'admin/views/form-editor.php';
 	}
 
+	/** Returns the preview/public URL for a form post, using ID when no slug exists yet. */
+	private static function form_url( \WP_Post $post ): string {
+		$identifier = $post->post_name ?: (string) $post->ID;
+		return add_query_arg( 'bmm_form', $identifier, home_url( '/' ) );
+	}
+
 	public static function render_link_meta_box( \WP_Post $post ): void {
-		$url = $post->post_name ? add_query_arg( 'bmm_form', $post->post_name, home_url( '/' ) ) : '';
+		$url = self::form_url( $post );
 
 		if ( $post->post_status === 'published' ) {
 			echo '<p><a href="' . esc_url( $url ) . '" target="_blank">' . esc_html( $url ) . '</a></p>';
 			echo '<button type="button" class="button" onclick="navigator.clipboard.writeText(\'' . esc_js( $url ) . '\')">' . esc_html__( 'Copy Link', 'bmm-registration' ) . '</button>';
-		} elseif ( $post->post_status === 'draft' && $url ) {
+		} elseif ( $post->post_status === 'draft' ) {
 			echo '<p><a href="' . esc_url( $url ) . '" target="_blank">' . esc_html__( 'Preview (admin only)', 'bmm-registration' ) . '</a></p>';
 		} elseif ( $post->post_status === 'archived' ) {
 			echo '<p>' . esc_html__( 'This form is archived (closed to new registrations).', 'bmm-registration' ) . '</p>';
-		} else {
-			echo '<p>' . esc_html__( 'Save the form first to get a preview link.', 'bmm-registration' ) . '</p>';
 		}
 	}
 
@@ -60,10 +64,10 @@ class BMM_Form_Editor {
 		if ( $post->post_type !== 'bmm_reg_form' || $post->post_status !== 'draft' ) {
 			return $actions;
 		}
-		if ( ! $post->post_name || ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return $actions;
 		}
-		$url = add_query_arg( 'bmm_form', $post->post_name, home_url( '/' ) );
+		$url = self::form_url( $post );
 		$actions['bmm_preview'] = '<a href="' . esc_url( $url ) . '" target="_blank">' . esc_html__( 'Preview', 'bmm-registration' ) . '</a>';
 		return $actions;
 	}
