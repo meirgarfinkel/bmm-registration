@@ -58,11 +58,16 @@ class BMM_Submission {
 			'sponsorships_selected' => wp_json_encode( $sponsorship_ids ),
 		] );
 
-		// Notes & payment type
+		// Notes & payment type. The installment count must respect the chosen
+		// method: "pay in full" (Ragil) is always a single payment, regardless of
+		// whatever the installments selector last held. Only "Tashlumim" keeps the
+		// chosen count (clamped to >= 1).
+		$payment_type = in_array( $data['payment_type'] ?? 'Ragil', [ 'Ragil', 'Tashlumim' ], true ) ? $data['payment_type'] : 'Ragil';
+		$tashlumim    = ( $payment_type === 'Tashlumim' ) ? max( 1, (int) ( $data['tashlumim'] ?? 1 ) ) : 1;
 		self::set_meta( $post_id, [
 			'notes'        => sanitize_textarea_field( $data['notes'] ?? '' ),
-			'payment_type' => in_array( $data['payment_type'] ?? 'Ragil', [ 'Ragil', 'Tashlumim' ], true ) ? $data['payment_type'] : 'Ragil',
-			'tashlumim'    => max( 1, (int) ( $data['tashlumim'] ?? 1 ) ),
+			'payment_type' => $payment_type,
+			'tashlumim'    => $tashlumim,
 		] );
 
 		// Pricing (locked at submission time)
