@@ -105,9 +105,6 @@ class BMM_Post_Types {
 			return $vars;
 		} );
 
-		// Use template_include so we fully control the output.
-		// The_content approach fails because the home/blog template never calls
-		// the_content() in a single-post context when only a query var is present.
 		add_filter( 'template_include', function ( string $template ): string {
 			$slug = get_query_var( 'bmm_form' );
 			if ( ! $slug ) {
@@ -119,10 +116,61 @@ class BMM_Post_Types {
 				return $template;
 			}
 
-			// Pass form ID to the template via a global.
+			// Build a fake $post so theme templates that call the_content() work.
+			// Without this, templates render a blog loop or a blank content area.
+			global $post, $wp_query;
+			$post = new \WP_Post( (object) [
+				'ID'             => 0,
+				'post_title'     => $form_post->post_title,
+				'post_content'   => '',
+				'post_excerpt'   => '',
+				'post_status'    => 'publish',
+				'post_type'      => 'page',
+				'post_name'      => $form_post->post_name,
+				'post_author'    => 0,
+				'post_date'      => '',
+				'post_date_gmt'  => '',
+				'comment_status' => 'closed',
+				'ping_status'    => 'closed',
+				'filter'         => 'raw',
+			] );
+			setup_postdata( $post );
+
+			// Tell WP this is a singular page so is_page() etc. return correctly.
+			$wp_query->is_page     = true;
+			$wp_query->is_singular = true;
+			$wp_query->is_home     = false;
+			$wp_query->is_archive  = false;
+			$wp_query->queried_object = $post;
+
+			// Inject the form HTML wherever the theme calls the_content().
+			add_filter( 'the_content', function () use ( $form_post ): string {
+				return BMM_Form_Renderer::render( $form_post->ID );
+			} );
+
+			// Suppress unwanted output (comments, post nav, etc.).
+			add_filter( 'comments_open',   '__return_false' );
+			add_filter( 'pings_open',      '__return_false' );
+			add_filter( 'get_the_excerpt', '__return_empty_string' );
+
+			// Resolve the chosen theme template, falling back to our own wrapper.
+			try {
+				$config          = new BMM_Form_Config( $form_post->ID );
+				$chosen_filename = $config->page_template;
+			} catch ( \Exception $e ) {
+				$chosen_filename = '';
+			}
+
+			if ( $chosen_filename ) {
+				$theme_path = get_theme_file_path( $chosen_filename );
+				if ( file_exists( $theme_path ) ) {
+					return $theme_path;
+				}
+			}
+
+			// No template chosen — use the plugin's own minimal wrapper.
 			global $bmm_current_form_id;
 			$bmm_current_form_id = $form_post->ID;
-
 			return BMM_REG_DIR . 'public/views/form-page.php';
 		} );
 	}

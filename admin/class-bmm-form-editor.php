@@ -103,6 +103,14 @@ class BMM_Form_Editor {
 		update_post_meta( $post_id, '_bmm_form_mosad',     sanitize_text_field( $_POST['bmm_form_mosad'] ?? '' ) );
 		update_post_meta( $post_id, '_bmm_form_api_valid', sanitize_text_field( $_POST['bmm_form_api_valid'] ?? '' ) );
 
+		// Page template — validate against the theme's registered templates
+		$submitted_template = sanitize_text_field( $_POST['bmm_form_page_template'] ?? '' );
+		$valid_templates    = array_values( wp_get_theme()->get_page_templates() );
+		if ( $submitted_template && ! in_array( $submitted_template, $valid_templates, true ) ) {
+			$submitted_template = '';
+		}
+		update_post_meta( $post_id, '_bmm_form_page_template', $submitted_template );
+
 		// Sponsorships (repeater)
 		$sponsorships = [];
 		$s_ids     = array_map( 'sanitize_key',        (array) ( $_POST['bmm_sponsorship_id']      ?? [] ) );

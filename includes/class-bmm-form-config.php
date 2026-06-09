@@ -17,6 +17,7 @@ class BMM_Form_Config {
 	public int    $ragil_tashlumim;
 	public string $mosad;
 	public string $api_valid;
+	public string $page_template;
 
 	public static function default_sponsorships(): array {
 		return [
@@ -53,8 +54,9 @@ class BMM_Form_Config {
 			: self::default_sponsorships();
 
 		// Per-form credentials fall back to global settings
-		$this->mosad     = $m( 'mosad' ) ?: BMM_Settings::get( 'mosad' );
-		$this->api_valid = $m( 'api_valid' ) ?: BMM_Settings::get( 'api_valid' );
+		$this->mosad         = $m( 'mosad' ) ?: BMM_Settings::get( 'mosad' );
+		$this->api_valid     = $m( 'api_valid' ) ?: BMM_Settings::get( 'api_valid' );
+		$this->page_template = $m( 'page_template' ) ?: '';
 	}
 
 	public function enabled_sponsorships(): array {

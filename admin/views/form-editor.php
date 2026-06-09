@@ -100,6 +100,28 @@ $sponsorships = $config ? $config->sponsorships : BMM_Form_Config::default_spons
 		<button type="button" class="button" id="bmm-add-sponsorship" style="margin-top:8px;"><?php esc_html_e( '+ Add Sponsorship', 'bmm-registration' ); ?></button>
 	</div>
 
+	<h3><?php esc_html_e( 'Page Template', 'bmm-registration' ); ?></h3>
+	<table class="form-table">
+		<tr>
+			<th><label for="bmm_form_page_template"><?php esc_html_e( 'Form Page Template', 'bmm-registration' ); ?></label></th>
+			<td>
+				<?php
+				$saved_template  = get_post_meta( $post->ID, '_bmm_form_page_template', true );
+				$theme_templates = wp_get_theme()->get_page_templates();
+				?>
+				<select id="bmm_form_page_template" name="bmm_form_page_template">
+					<option value=""><?php esc_html_e( '— Default (plugin wrapper) —', 'bmm-registration' ); ?></option>
+					<?php foreach ( $theme_templates as $template_name => $template_file ) : ?>
+					<option value="<?php echo esc_attr( $template_file ); ?>" <?php selected( $saved_template, $template_file ); ?>>
+						<?php echo esc_html( $template_name ); ?>
+					</option>
+					<?php endforeach; ?>
+				</select>
+				<p class="description"><?php esc_html_e( 'Choose which theme page template wraps the registration form.', 'bmm-registration' ); ?></p>
+			</td>
+		</tr>
+	</table>
+
 	<h3><?php esc_html_e( 'Nedarim Plus Credentials', 'bmm-registration' ); ?></h3>
 	<p class="description"><?php esc_html_e( 'Leave blank to use the global settings.', 'bmm-registration' ); ?></p>
 	<table class="form-table">
