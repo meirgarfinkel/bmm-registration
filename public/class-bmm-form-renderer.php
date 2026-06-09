@@ -57,6 +57,7 @@ class BMM_Form_Renderer {
 			'includedMen'     => $form->membership_included_men,
 			'includedWomen'   => $form->membership_included_women,
 			'extraSeatPrice'  => $form->extra_seat_price,
+				'guestSeatPrice'  => $form->guest_seat_price,
 			'davenings'       => array_keys( BMM_Pricing::DAVENINGS ),
 			'daveningLabels'  => BMM_Pricing::DAVENINGS,
 			'i18n'            => [

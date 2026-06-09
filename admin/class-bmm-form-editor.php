@@ -89,6 +89,7 @@ class BMM_Form_Editor {
 			'membership_included_men'   => 'intval',
 			'membership_included_women' => 'intval',
 			'extra_seat_price'          => 'intval',
+			'guest_seat_price'          => 'intval',
 			'hk_months'                 => 'intval',
 			'ragil_tashlumim'           => 'intval',
 		];

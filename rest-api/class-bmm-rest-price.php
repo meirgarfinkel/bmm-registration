@@ -13,10 +13,11 @@ class BMM_REST_Price extends \WP_REST_Controller {
 			'permission_callback' => '__return_true',
 			'args'                => [
 				'form_id'          => [ 'required' => true, 'type' => 'integer', 'minimum' => 1 ],
-				'wants_membership' => [ 'type' => 'boolean', 'default' => false ],
-				'seats_men'        => [ 'type' => 'object', 'default' => [] ],
-				'seats_women'      => [ 'type' => 'object', 'default' => [] ],
-				'sponsorship_ids'  => [ 'type' => 'array', 'items' => [ 'type' => 'string' ], 'default' => [] ],
+				'wants_membership'  => [ 'type' => 'boolean', 'default' => false ],
+				'wants_guest_seats' => [ 'type' => 'boolean', 'default' => false ],
+				'seats_men'         => [ 'type' => 'object', 'default' => [] ],
+				'seats_women'       => [ 'type' => 'object', 'default' => [] ],
+				'sponsorship_ids'   => [ 'type' => 'array', 'items' => [ 'type' => 'string' ], 'default' => [] ],
 			],
 		] );
 	}

@@ -43,8 +43,12 @@
 		// Populate sponsorships list (step 4)
 		populateSponsorships();
 
-		// Populate membership price hint
+		// Populate membership and guest seat price hints
 		populateMembershipHint();
+		populateGuestSeatPriceHint();
+
+		// Enforce mutual exclusivity between membership and guest seats
+		wireGuestMembershipToggle();
 
 		// Restore from sessionStorage
 		restoreState();
@@ -163,9 +167,10 @@
 		}
 
 		if ( step === 3 ) {
-			state.formData.wants_membership = wrap.querySelector( '#bmm_wants_membership' )?.checked ? 1 : 0;
-			state.formData.seats_men        = collectSeats( 'bmm-seat-men' );
-			state.formData.seats_women      = collectSeats( 'bmm-seat-women' );
+			state.formData.wants_membership  = wrap.querySelector( '#bmm_wants_membership' )?.checked  ? 1 : 0;
+			state.formData.wants_guest_seats = wrap.querySelector( '#bmm_wants_guest_seats' )?.checked ? 1 : 0;
+			state.formData.seats_men         = collectSeats( 'bmm-seat-men' );
+			state.formData.seats_women       = collectSeats( 'bmm-seat-women' );
 		}
 
 		if ( step === 4 ) {
@@ -293,6 +298,26 @@
 					<span class="bmm-sponsorship-amount">₪${ escHtml( String( s.amount ) ) }</span>
 				</span>`;
 			container.appendChild( label );
+		} );
+	}
+
+	function populateGuestSeatPriceHint() {
+		const el = document.getElementById( 'bmm-guest-seat-price' );
+		if ( el ) el.textContent = cfg.guestSeatPrice || 0;
+	}
+
+	function wireGuestMembershipToggle() {
+		const membershipCb = document.getElementById( 'bmm_wants_membership' );
+		const guestCb      = document.getElementById( 'bmm_wants_guest_seats' );
+		if ( ! membershipCb || ! guestCb ) return;
+
+		membershipCb.addEventListener( 'change', function () {
+			if ( this.checked ) guestCb.checked = false;
+			if ( typeof window.bmmFetchPrice === 'function' ) window.bmmFetchPrice();
+		} );
+		guestCb.addEventListener( 'change', function () {
+			if ( this.checked ) membershipCb.checked = false;
+			if ( typeof window.bmmFetchPrice === 'function' ) window.bmmFetchPrice();
 		} );
 	}
 

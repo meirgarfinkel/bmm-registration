@@ -1,7 +1,7 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
 <h3><?php esc_html_e( 'Membership & Seat Reservations', 'bmm-registration' ); ?></h3>
 
-<!-- Membership -->
+<!-- Membership (mutually exclusive with guest seats) -->
 <div class="bmm-field bmm-membership-field">
 	<label class="bmm-checkbox">
 		<input type="checkbox" name="wants_membership" id="bmm_wants_membership" value="1" />
@@ -16,6 +16,23 @@
 		</span>
 	</label>
 	<p class="bmm-membership-includes description" id="bmm-membership-includes-text"></p>
+</div>
+
+<!-- Guest Seats (mutually exclusive with membership) -->
+<div class="bmm-field bmm-guest-field" id="bmm-guest-field">
+	<label class="bmm-checkbox">
+		<input type="checkbox" name="wants_guest_seats" id="bmm_wants_guest_seats" value="1" />
+		<span>
+			<?php
+			printf(
+				/* translators: %s = price in NIS */
+				esc_html__( 'Guest Seats – ₪%s per seat', 'bmm-registration' ),
+				'<strong id="bmm-guest-seat-price"></strong>'
+			);
+			?>
+		</span>
+	</label>
+	<p class="description" style="margin-left:1.6rem;"><?php esc_html_e( 'No membership. Every seat charged at the guest rate — no seats included.', 'bmm-registration' ); ?></p>
 </div>
 
 <!-- Same for all toggle -->
@@ -82,6 +99,14 @@
 	<div class="bmm-pricing-preview__row" id="bmm-preview-extra-women" hidden>
 		<span id="bmm-preview-extra-women-label"></span>
 		<span id="bmm-preview-extra-women-amount"></span>
+	</div>
+	<div class="bmm-pricing-preview__row" id="bmm-preview-guest-men" hidden>
+		<span id="bmm-preview-guest-men-label"></span>
+		<span id="bmm-preview-guest-men-amount"></span>
+	</div>
+	<div class="bmm-pricing-preview__row" id="bmm-preview-guest-women" hidden>
+		<span id="bmm-preview-guest-women-label"></span>
+		<span id="bmm-preview-guest-women-amount"></span>
 	</div>
 	<div class="bmm-pricing-preview__row bmm-pricing-preview__subtotal" id="bmm-preview-subtotal" hidden>
 		<span><strong><?php esc_html_e( 'Subtotal', 'bmm-registration' ); ?></strong></span>

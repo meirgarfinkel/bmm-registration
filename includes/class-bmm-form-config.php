@@ -11,6 +11,7 @@ class BMM_Form_Config {
 	public int    $membership_included_men;
 	public int    $membership_included_women;
 	public int    $extra_seat_price;
+	public int    $guest_seat_price;
 	public array  $sponsorships;
 	public string $payment_options;
 	public int    $hk_months;
@@ -44,6 +45,7 @@ class BMM_Form_Config {
 		$this->membership_included_men   = (int) ( $m( 'membership_included_men' ) ?: 0 );
 		$this->membership_included_women = (int) ( $m( 'membership_included_women' ) ?: 0 );
 		$this->extra_seat_price          = (int) ( $m( 'extra_seat_price' ) ?: 0 );
+		$this->guest_seat_price          = (int) ( $m( 'guest_seat_price' ) ?: 0 );
 		$this->payment_options           = $m( 'payment_options' ) ?: 'both';
 		$this->hk_months                 = (int) ( $m( 'hk_months' ) ?: 0 );
 		$this->ragil_tashlumim           = (int) ( $m( 'ragil_tashlumim' ) ?: 1 );

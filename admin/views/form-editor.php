@@ -9,6 +9,7 @@ $m = function( string $key, mixed $default = '' ) use ( $post, $config ): mixed 
 			'membership_included_men'   => $config->membership_included_men,
 			'membership_included_women' => $config->membership_included_women,
 			'extra_seat_price'          => $config->extra_seat_price,
+				'guest_seat_price'          => $config->guest_seat_price,
 			'payment_options'           => $config->payment_options,
 			'hk_months'                 => $config->hk_months,
 			'ragil_tashlumim'           => $config->ragil_tashlumim,
@@ -45,6 +46,13 @@ $sponsorships = $config ? $config->sponsorships : BMM_Form_Config::default_spons
 			<td>
 				<input type="number" id="bmm_form_extra_seat_price" name="bmm_form_extra_seat_price" value="<?php echo esc_attr( $m( 'extra_seat_price', 0 ) ); ?>" min="0" class="small-text" />
 				<p class="description"><?php esc_html_e( 'Charged per extra seat beyond those included in membership (based on peak davening).', 'bmm-registration' ); ?></p>
+			</td>
+		</tr>
+		<tr>
+			<th><label for="bmm_form_guest_seat_price"><?php esc_html_e( 'Guest Seat Price (₪)', 'bmm-registration' ); ?></label></th>
+			<td>
+				<input type="number" id="bmm_form_guest_seat_price" name="bmm_form_guest_seat_price" value="<?php echo esc_attr( $m( 'guest_seat_price', 0 ) ); ?>" min="0" class="small-text" />
+				<p class="description"><?php esc_html_e( 'Per-seat price for "Guest Seats – No Membership". Every seat is charged at this rate (no included seats).', 'bmm-registration' ); ?></p>
 			</td>
 		</tr>
 	</table>

@@ -46,9 +46,10 @@ class BMM_Submission {
 		$seats_women = BMM_Pricing::normalize_seats( (array) ( $data['seats_women'] ?? [] ) );
 
 		self::set_meta( $post_id, [
-			'wants_membership' => ! empty( $data['wants_membership'] ) ? 1 : 0,
-			'seats_men'        => wp_json_encode( $seats_men ),
-			'seats_women'      => wp_json_encode( $seats_women ),
+			'wants_membership'  => ! empty( $data['wants_membership'] )  ? 1 : 0,
+			'wants_guest_seats' => ! empty( $data['wants_guest_seats'] ) ? 1 : 0,
+			'seats_men'         => wp_json_encode( $seats_men ),
+			'seats_women'       => wp_json_encode( $seats_women ),
 		] );
 
 		// Sponsorships
@@ -68,6 +69,8 @@ class BMM_Submission {
 			'price_membership'    => $pricing['membership'],
 			'price_extra_men'     => $pricing['extra_men_seats'],
 			'price_extra_women'   => $pricing['extra_women_seats'],
+			'price_guest_men'     => $pricing['guest_men_seats'],
+			'price_guest_women'   => $pricing['guest_women_seats'],
 			'price_sponsorships'  => $pricing['sponsorships_total'],
 			'price_total'         => $pricing['total'],
 			'callback_token'      => $token,

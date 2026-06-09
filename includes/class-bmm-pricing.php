@@ -37,32 +37,50 @@ class BMM_Pricing {
 	 * }
 	 */
 	public static function calculate( BMM_Form_Config $form, array $data ): array {
-		$wants_membership = ! empty( $data['wants_membership'] );
-		$seats_men        = self::normalize_seats( $data['seats_men'] ?? [] );
-		$seats_women      = self::normalize_seats( $data['seats_women'] ?? [] );
-		$sponsorship_ids  = array_map( 'strval', (array) ( $data['sponsorship_ids'] ?? [] ) );
-
-		// Membership
-		$membership_fee = $wants_membership ? $form->membership_price : 0;
-
-		// Extra seats: max across all 6 davenings minus included seats
-		$included_men   = $wants_membership ? $form->membership_included_men   : 0;
-		$included_women = $wants_membership ? $form->membership_included_women : 0;
+		$wants_membership  = ! empty( $data['wants_membership'] );
+		$wants_guest_seats = ! empty( $data['wants_guest_seats'] ) && ! $wants_membership;
+		$seats_men         = self::normalize_seats( $data['seats_men'] ?? [] );
+		$seats_women       = self::normalize_seats( $data['seats_women'] ?? [] );
+		$sponsorship_ids   = array_map( 'strval', (array) ( $data['sponsorship_ids'] ?? [] ) );
 
 		$max_men   = $seats_men   ? max( $seats_men )   : 0;
 		$max_women = $seats_women ? max( $seats_women ) : 0;
 
-		$extra_men_count   = max( 0, $max_men   - $included_men );
-		$extra_women_count = max( 0, $max_women - $included_women );
+		// ── Membership path ───────────────────────────────────────────────────
+		$membership_fee    = 0;
+		$extra_men_count   = 0;
+		$extra_women_count = 0;
+		$extra_men_fee     = 0;
+		$extra_women_fee   = 0;
 
-		$extra_men_fee   = $extra_men_count   * $form->extra_seat_price;
-		$extra_women_fee = $extra_women_count * $form->extra_seat_price;
+		if ( $wants_membership ) {
+			$membership_fee    = $form->membership_price;
+			$included_men      = $form->membership_included_men;
+			$included_women    = $form->membership_included_women;
+			$extra_men_count   = max( 0, $max_men   - $included_men );
+			$extra_women_count = max( 0, $max_women - $included_women );
+			$extra_men_fee     = $extra_men_count   * $form->extra_seat_price;
+			$extra_women_fee   = $extra_women_count * $form->extra_seat_price;
+		}
 
-		// Sponsorships
+		// ── Guest seats path (mutually exclusive with membership) ─────────────
+		$guest_men_count   = 0;
+		$guest_women_count = 0;
+		$guest_men_fee     = 0;
+		$guest_women_fee   = 0;
+
+		if ( $wants_guest_seats ) {
+			$guest_men_count   = $max_men;
+			$guest_women_count = $max_women;
+			$guest_men_fee     = $guest_men_count   * $form->guest_seat_price;
+			$guest_women_fee   = $guest_women_count * $form->guest_seat_price;
+		}
+
+		// ── Sponsorships ──────────────────────────────────────────────────────
 		$sponsorship_breakdown = [];
 		$sponsorships_total    = 0;
 
-		$enabled = $form->enabled_sponsorships();
+		$enabled     = $form->enabled_sponsorships();
 		$enabled_map = array_column( $enabled, null, 'id' );
 
 		foreach ( $sponsorship_ids as $id ) {
@@ -77,17 +95,24 @@ class BMM_Pricing {
 			}
 		}
 
-		$total = $membership_fee + $extra_men_fee + $extra_women_fee + $sponsorships_total;
+		$total = $membership_fee + $extra_men_fee + $extra_women_fee
+		       + $guest_men_fee + $guest_women_fee
+		       + $sponsorships_total;
 
 		return [
-			'membership'         => $membership_fee,
-			'extra_men_seats'    => $extra_men_fee,
-			'extra_women_seats'  => $extra_women_fee,
-			'extra_men_count'    => $extra_men_count,
-			'extra_women_count'  => $extra_women_count,
-			'sponsorships'       => $sponsorship_breakdown,
-			'sponsorships_total' => $sponsorships_total,
-			'total'              => $total,
+			'membership'          => $membership_fee,
+			'extra_men_seats'     => $extra_men_fee,
+			'extra_women_seats'   => $extra_women_fee,
+			'extra_men_count'     => $extra_men_count,
+			'extra_women_count'   => $extra_women_count,
+			'guest_men_seats'     => $guest_men_fee,
+			'guest_women_seats'   => $guest_women_fee,
+			'guest_men_count'     => $guest_men_count,
+			'guest_women_count'   => $guest_women_count,
+			'wants_guest_seats'   => $wants_guest_seats,
+			'sponsorships'        => $sponsorship_breakdown,
+			'sponsorships_total'  => $sponsorships_total,
+			'total'               => $total,
 		];
 	}
 

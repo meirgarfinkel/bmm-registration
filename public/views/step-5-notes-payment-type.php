@@ -16,6 +16,14 @@
 		<span id="bmm-step5-extra-women-label"></span>
 		<span id="bmm-step5-extra-women-amount"></span>
 	</div>
+	<div class="bmm-summary-row" id="bmm-step5-guest-men" hidden>
+		<span id="bmm-step5-guest-men-label"></span>
+		<span id="bmm-step5-guest-men-amount"></span>
+	</div>
+	<div class="bmm-summary-row" id="bmm-step5-guest-women" hidden>
+		<span id="bmm-step5-guest-women-label"></span>
+		<span id="bmm-step5-guest-women-amount"></span>
+	</div>
 	<div class="bmm-summary-row" id="bmm-step5-sponsorships" hidden>
 		<span id="bmm-step5-sponsorships-label"><?php esc_html_e( 'Sponsorships', 'bmm-registration' ); ?></span>
 		<span id="bmm-step5-sponsorships-amount"></span>
