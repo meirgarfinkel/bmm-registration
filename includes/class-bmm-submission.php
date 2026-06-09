@@ -14,7 +14,7 @@ class BMM_Submission {
 		$post_id = wp_insert_post( [
 			'post_type'   => 'bmm_submission',
 			'post_title'  => trim( "$first $last" ) ?: __( 'Registration', 'bmm-registration' ),
-			'post_status' => 'pending',
+			'post_status' => 'bmm_pending',
 			'post_parent' => $form_id,
 		], true );
 

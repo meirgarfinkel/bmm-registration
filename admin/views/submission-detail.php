@@ -117,8 +117,8 @@ if ( $form_config && is_array( $meta['sponsorships_selected'] ) ) {
 				<input type="hidden" name="action" value="bmm_update_submission_status">
 				<input type="hidden" name="submission_id" value="<?php echo esc_attr( $submission_id ); ?>">
 				<select name="new_status">
-					<?php foreach ( [ 'pending', 'completed', 'failed' ] as $s ) : ?>
-					<option value="<?php echo esc_attr( $s ); ?>" <?php selected( $post->post_status, $s ); ?>><?php echo esc_html( ucfirst( $s ) ); ?></option>
+					<?php foreach ( [ 'bmm_pending' => 'Pending', 'completed' => 'Completed', 'failed' => 'Failed' ] as $s => $s_label ) : ?>
+					<option value="<?php echo esc_attr( $s ); ?>" <?php selected( $post->post_status, $s ); ?>><?php echo esc_html( $s_label ); ?></option>
 					<?php endforeach; ?>
 				</select>
 				<?php submit_button( __( 'Update Status', 'bmm-registration' ), 'secondary', '', false ); ?>

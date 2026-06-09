@@ -49,7 +49,7 @@ class BMM_Submissions_List extends \WP_List_Table {
 
 		$args = [
 			'post_type'      => 'bmm_submission',
-			'post_status'    => $status_filter ?: [ 'pending', 'completed', 'failed' ],
+			'post_status'    => $status_filter ?: [ 'bmm_pending', 'completed', 'failed' ],
 			'posts_per_page' => $per_page,
 			'paged'          => $current_page,
 			'orderby'        => 'date',
@@ -113,9 +113,9 @@ class BMM_Submissions_List extends \WP_List_Table {
 
 	public function column_payment_status( \WP_Post $item ): string {
 		$status_labels = [
-			'pending'   => '<span class="bmm-status bmm-status--pending">'   . esc_html__( 'Pending', 'bmm-registration' )   . '</span>',
-			'completed' => '<span class="bmm-status bmm-status--completed">' . esc_html__( 'Completed', 'bmm-registration' ) . '</span>',
-			'failed'    => '<span class="bmm-status bmm-status--failed">'    . esc_html__( 'Failed', 'bmm-registration' )    . '</span>',
+			'bmm_pending' => '<span class="bmm-status bmm-status--pending">'   . esc_html__( 'Pending', 'bmm-registration' )   . '</span>',
+			'completed'   => '<span class="bmm-status bmm-status--completed">' . esc_html__( 'Completed', 'bmm-registration' ) . '</span>',
+			'failed'      => '<span class="bmm-status bmm-status--failed">'    . esc_html__( 'Failed', 'bmm-registration' )    . '</span>',
 		];
 		return $status_labels[ $item->post_status ] ?? esc_html( $item->post_status );
 	}
@@ -149,7 +149,7 @@ class BMM_Submissions_List extends \WP_List_Table {
 
 		// Status filter
 		echo '<select name="payment_status"><option value="">' . esc_html__( 'All Statuses', 'bmm-registration' ) . '</option>';
-		foreach ( [ 'pending' => 'Pending', 'completed' => 'Completed', 'failed' => 'Failed' ] as $val => $label ) {
+		foreach ( [ 'bmm_pending' => 'Pending', 'completed' => 'Completed', 'failed' => 'Failed' ] as $val => $label ) {
 			echo '<option value="' . esc_attr( $val ) . '"' . selected( $current_status, $val, false ) . '>' . esc_html( $label ) . '</option>';
 		}
 		echo '</select>';

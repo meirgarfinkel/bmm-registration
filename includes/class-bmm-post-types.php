@@ -71,7 +71,7 @@ class BMM_Post_Types {
 		] );
 
 		// Submission statuses
-		register_post_status( 'pending', [
+		register_post_status( 'bmm_pending', [
 			'label'                     => __( 'Pending Payment', 'bmm-registration' ),
 			'public'                    => false,
 			'exclude_from_search'       => true,

@@ -86,7 +86,7 @@ class BMM_Admin {
 		$submission_id = (int) ( $_POST['submission_id'] ?? 0 );
 		$new_status    = sanitize_key( $_POST['new_status'] ?? '' );
 
-		if ( $submission_id && in_array( $new_status, [ 'pending', 'completed', 'failed' ], true ) ) {
+		if ( $submission_id && in_array( $new_status, [ 'bmm_pending', 'completed', 'failed' ], true ) ) {
 			wp_update_post( [ 'ID' => $submission_id, 'post_status' => $new_status ] );
 		}
 

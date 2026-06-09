@@ -17,7 +17,7 @@ class BMM_CSV_Export {
 
 		$query_args = [
 			'post_type'      => 'bmm_submission',
-			'post_status'    => $status ?: [ 'pending', 'completed', 'failed' ],
+			'post_status'    => $status ?: [ 'bmm_pending', 'completed', 'failed' ],
 			'posts_per_page' => -1,
 			'orderby'        => 'date',
 			'order'          => 'DESC',

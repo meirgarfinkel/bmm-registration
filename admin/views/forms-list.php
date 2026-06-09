@@ -22,8 +22,7 @@
 		<tbody>
 		<?php foreach ( $forms as $form ) :
 			$edit_url = get_edit_post_link( $form->ID );
-			$sub_count = (int) wp_count_posts( 'bmm_submission' )->pending + (int) wp_count_posts( 'bmm_submission' )->completed;
-			$sub_count_q = new WP_Query( [ 'post_type' => 'bmm_submission', 'post_parent' => $form->ID, 'post_status' => [ 'pending','completed','failed' ], 'posts_per_page' => -1, 'fields' => 'ids' ] );
+			$sub_count_q = new WP_Query( [ 'post_type' => 'bmm_submission', 'post_parent' => $form->ID, 'post_status' => [ 'bmm_pending', 'completed', 'failed' ], 'posts_per_page' => -1, 'fields' => 'ids' ] );
 			$sub_count = $sub_count_q->found_posts;
 			$public_url = add_query_arg( 'bmm_form', $form->post_name, home_url( '/' ) );
 			$status_label = ucfirst( $form->post_status );
