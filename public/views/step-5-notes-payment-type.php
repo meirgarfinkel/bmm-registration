@@ -1,6 +1,31 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
 <h3><?php esc_html_e( 'Notes & Payment Method', 'bmm-registration' ); ?></h3>
 
+<!-- Order summary — populated by bmm-pricing.js whenever pricing data is available -->
+<div class="bmm-order-summary" id="bmm-step5-summary">
+	<h4><?php esc_html_e( 'Order Summary', 'bmm-registration' ); ?></h4>
+	<div class="bmm-summary-row" id="bmm-step5-membership" hidden>
+		<span><?php esc_html_e( 'Membership', 'bmm-registration' ); ?></span>
+		<span id="bmm-step5-membership-amount"></span>
+	</div>
+	<div class="bmm-summary-row" id="bmm-step5-extra-men" hidden>
+		<span id="bmm-step5-extra-men-label"></span>
+		<span id="bmm-step5-extra-men-amount"></span>
+	</div>
+	<div class="bmm-summary-row" id="bmm-step5-extra-women" hidden>
+		<span id="bmm-step5-extra-women-label"></span>
+		<span id="bmm-step5-extra-women-amount"></span>
+	</div>
+	<div class="bmm-summary-row" id="bmm-step5-sponsorships" hidden>
+		<span id="bmm-step5-sponsorships-label"><?php esc_html_e( 'Sponsorships', 'bmm-registration' ); ?></span>
+		<span id="bmm-step5-sponsorships-amount"></span>
+	</div>
+	<div class="bmm-summary-row bmm-summary-row--total">
+		<strong><?php esc_html_e( 'Total', 'bmm-registration' ); ?></strong>
+		<strong id="bmm-step5-total">₪0</strong>
+	</div>
+</div>
+
 <div class="bmm-field">
 	<label for="bmm_notes"><?php esc_html_e( 'Notes', 'bmm-registration' ); ?> <span class="bmm-optional"><?php esc_html_e( '(optional)', 'bmm-registration' ); ?></span></label>
 	<textarea id="bmm_notes" name="notes" rows="4" placeholder="<?php esc_attr_e( 'Any additional information or special requests...', 'bmm-registration' ); ?>"></textarea>

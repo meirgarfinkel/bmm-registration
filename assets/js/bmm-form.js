@@ -77,6 +77,11 @@
 		nextBtn.hidden   = n >= state.totalSteps;
 		submitBtn.hidden = n !== state.totalSteps - 1; // step 5
 
+		// When entering step 5, refresh pricing so the order summary is current
+		if ( n === 5 && typeof window.bmmFetchPrice === 'function' ) {
+			window.bmmFetchPrice();
+		}
+
 		// When entering step 6, trigger summary build
 		if ( n === state.totalSteps ) {
 			nextBtn.hidden   = true;
@@ -297,7 +302,16 @@
 
 		const includesEl = document.getElementById( 'bmm-membership-includes-text' );
 		if ( includesEl ) {
-			includesEl.textContent = `Includes ${ cfg.includedMen || 0 } men's seat(s) and ${ cfg.includedWomen || 0 } women's seat(s) for all davenings.`;
+			const men   = cfg.includedMen   || 0;
+			const women = cfg.includedWomen || 0;
+			if ( men > 0 || women > 0 ) {
+				const parts = [];
+				if ( men   > 0 ) parts.push( `${ men } men's seat${ men   !== 1 ? 's' : '' }` );
+				if ( women > 0 ) parts.push( `${ women } women's seat${ women !== 1 ? 's' : '' }` );
+				includesEl.textContent = `Includes ${ parts.join( ' and ' ) } for all davenings.`;
+			} else {
+				includesEl.textContent = '';
+			}
 		}
 	}
 

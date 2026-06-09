@@ -10,7 +10,7 @@
 			printf(
 				/* translators: %s = price in NIS */
 				esc_html__( 'Annual Membership – ₪%s', 'bmm-registration' ),
-				'<span id="bmm-membership-price"></span>'
+				'<strong id="bmm-membership-price"></strong>'
 			);
 			?>
 		</span>
@@ -20,7 +20,10 @@
 
 <!-- Same for all toggle -->
 <div class="bmm-seats-header">
-	<h4><?php esc_html_e( 'Seat Reservations', 'bmm-registration' ); ?></h4>
+	<h4>
+		<?php esc_html_e( 'Seat Reservations', 'bmm-registration' ); ?>
+		<span class="bmm-seat-price-note" id="bmm-seat-price-note"></span>
+	</h4>
 	<label class="bmm-toggle" id="bmm-same-for-all-label">
 		<input type="checkbox" id="bmm_same_for_all" />
 		<span class="bmm-toggle__track"></span>
@@ -79,5 +82,9 @@
 	<div class="bmm-pricing-preview__row" id="bmm-preview-extra-women" hidden>
 		<span id="bmm-preview-extra-women-label"></span>
 		<span id="bmm-preview-extra-women-amount"></span>
+	</div>
+	<div class="bmm-pricing-preview__row bmm-pricing-preview__subtotal" id="bmm-preview-subtotal" hidden>
+		<span><strong><?php esc_html_e( 'Subtotal', 'bmm-registration' ); ?></strong></span>
+		<strong id="bmm-preview-subtotal-amount"></strong>
 	</div>
 </div>
