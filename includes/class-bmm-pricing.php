@@ -95,6 +95,18 @@ class BMM_Pricing {
 			}
 		}
 
+		// Free-form "Other" sponsorship: any custom amount the donor enters.
+		// Negative amounts are never allowed.
+		$sponsorship_other = max( 0, (int) round( (float) ( $data['sponsorship_other'] ?? 0 ) ) );
+		if ( $sponsorship_other > 0 ) {
+			$sponsorship_breakdown[] = [
+				'id'     => 'other',
+				'label'  => __( 'Other', 'bmm-registration' ),
+				'amount' => $sponsorship_other,
+			];
+			$sponsorships_total += $sponsorship_other;
+		}
+
 		$total = $membership_fee + $extra_men_fee + $extra_women_fee
 		       + $guest_men_fee + $guest_women_fee
 		       + $sponsorships_total;

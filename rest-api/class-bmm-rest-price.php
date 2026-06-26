@@ -18,6 +18,7 @@ class BMM_REST_Price extends \WP_REST_Controller {
 				'seats_men'         => [ 'type' => 'object', 'default' => [] ],
 				'seats_women'       => [ 'type' => 'object', 'default' => [] ],
 				'sponsorship_ids'   => [ 'type' => 'array', 'items' => [ 'type' => 'string' ], 'default' => [] ],
+				'sponsorship_other' => [ 'type' => 'number', 'minimum' => 0, 'default' => 0 ],
 			],
 		] );
 	}

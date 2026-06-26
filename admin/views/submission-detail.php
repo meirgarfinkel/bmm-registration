@@ -15,6 +15,13 @@ if ( $form_config && is_array( $meta['sponsorships_selected'] ) ) {
 		}
 	}
 }
+if ( ! empty( $meta['sponsorship_other'] ) ) {
+	$selected_sponsorship_labels[] = sprintf(
+		/* translators: %d: custom sponsorship amount in NIS */
+		__( 'Other: ₪%d', 'bmm-registration' ),
+		(int) $meta['sponsorship_other']
+	);
+}
 ?>
 <div class="wrap bmm-submission-detail">
 	<h1>

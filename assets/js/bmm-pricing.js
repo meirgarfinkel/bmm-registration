@@ -47,6 +47,13 @@
 			wrap.querySelectorAll( '.bmm-sponsorship-check:checked' )
 		).map( el => el.value );
 
+		// "Other" free-form sponsorship amount (only when ticked; never negative)
+		const otherToggle = wrap.querySelector( '#bmm-sponsorship-other-toggle' );
+		const otherInput  = wrap.querySelector( '#bmm-sponsorship-other-amount' );
+		const sponsorshipOther = ( otherToggle && otherToggle.checked && otherInput )
+			? Math.max( 0, parseInt( otherInput.value, 10 ) || 0 )
+			: 0;
+
 		try {
 			const res = await fetch( cfg.priceEndpoint, {
 				method:  'POST',
@@ -61,6 +68,7 @@
 					seats_men:         seatsMen,
 					seats_women:       seatsWomen,
 					sponsorship_ids:   sponsorshipIds,
+					sponsorship_other: sponsorshipOther,
 				} ),
 			} );
 

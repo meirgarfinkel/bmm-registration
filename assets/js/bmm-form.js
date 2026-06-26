@@ -62,6 +62,10 @@
 		// Restore from sessionStorage
 		restoreState();
 
+		// "Other" sponsorship: toggle the amount field and forbid negatives.
+		// Runs after restoreState so a restored amount re-checks the toggle.
+		wireOtherSponsorship();
+
 		// Persist on any change
 		wrap.addEventListener( 'change', persistState );
 		wrap.addEventListener( 'input',  persistState );
@@ -199,6 +203,7 @@
 			state.formData.sponsorship_ids = Array.from(
 				wrap.querySelectorAll( '.bmm-sponsorship-check:checked' )
 			).map( el => el.value );
+			state.formData.sponsorship_other = readOtherSponsorshipAmount();
 		}
 
 		if ( step === 5 ) {
@@ -332,6 +337,40 @@
 				</span>`;
 			container.appendChild( label );
 		} );
+	}
+
+	// "Other" sponsorship: a free-form amount. The amount field only shows when
+	// the donor ticks "Other", and negative amounts are never accepted.
+	function wireOtherSponsorship() {
+		const toggle = document.getElementById( 'bmm-sponsorship-other-toggle' );
+		const field  = document.getElementById( 'bmm-sponsorship-other-field' );
+		const input  = document.getElementById( 'bmm-sponsorship-other-amount' );
+		if ( ! toggle || ! field || ! input ) return;
+
+		toggle.addEventListener( 'change', function () {
+			field.hidden = ! toggle.checked;
+			if ( ! toggle.checked ) input.value = '';
+			if ( typeof window.bmmFetchPrice === 'function' ) window.bmmFetchPrice();
+		} );
+
+		// No negatives — clamp on input.
+		input.addEventListener( 'input', function () {
+			const n = parseInt( input.value, 10 );
+			if ( input.value !== '' && ( isNaN( n ) || n < 0 ) ) input.value = '0';
+		} );
+
+		// Reflect a restored amount (> 0) by re-checking the toggle.
+		if ( readOtherSponsorshipAmount() > 0 ) {
+			toggle.checked = true;
+			field.hidden   = false;
+		}
+	}
+
+	function readOtherSponsorshipAmount() {
+		const toggle = document.getElementById( 'bmm-sponsorship-other-toggle' );
+		const input  = document.getElementById( 'bmm-sponsorship-other-amount' );
+		if ( ! toggle || ! toggle.checked || ! input ) return 0;
+		return Math.max( 0, parseInt( input.value, 10 ) || 0 );
 	}
 
 	function populateGuestSeatPriceHint() {

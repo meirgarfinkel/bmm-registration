@@ -38,7 +38,7 @@ class BMM_Submission {
 			'hebrew_name'           => sanitize_text_field( $data['hebrew_name'] ?? '' ),
 			'tribe'                 => sanitize_key( $data['tribe'] ?? 'yisrael' ),
 			'wife_hebrew_name'      => sanitize_text_field( $data['wife_hebrew_name'] ?? '' ),
-			'children_hebrew_names' => wp_json_encode( array_map( 'sanitize_text_field', (array) ( $data['children_hebrew_names'] ?? [] ) ) ),
+			'children_hebrew_names' => self::encode_json( array_map( 'sanitize_text_field', (array) ( $data['children_hebrew_names'] ?? [] ) ) ),
 		] );
 
 		// Membership & seats
@@ -48,14 +48,17 @@ class BMM_Submission {
 		self::set_meta( $post_id, [
 			'wants_membership'  => ! empty( $data['wants_membership'] )  ? 1 : 0,
 			'wants_guest_seats' => ! empty( $data['wants_guest_seats'] ) ? 1 : 0,
-			'seats_men'         => wp_json_encode( $seats_men ),
-			'seats_women'       => wp_json_encode( $seats_women ),
+			'seats_men'         => self::encode_json( $seats_men ),
+			'seats_women'       => self::encode_json( $seats_women ),
 		] );
 
-		// Sponsorships
-		$sponsorship_ids = array_map( 'sanitize_key', (array) ( $data['sponsorship_ids'] ?? [] ) );
+		// Sponsorships. Pre-defined sponsorships are stored as their IDs; the
+		// free-form "Other" sponsorship is stored as a non-negative amount.
+		$sponsorship_ids   = array_map( 'sanitize_key', (array) ( $data['sponsorship_ids'] ?? [] ) );
+		$sponsorship_other = max( 0, (int) round( (float) ( $data['sponsorship_other'] ?? 0 ) ) );
 		self::set_meta( $post_id, [
-			'sponsorships_selected' => wp_json_encode( $sponsorship_ids ),
+			'sponsorships_selected' => self::encode_json( $sponsorship_ids ),
+			'sponsorship_other'     => $sponsorship_other,
 		] );
 
 		// Notes & payment type. The installment count must respect the chosen
@@ -90,7 +93,7 @@ class BMM_Submission {
 	 */
 	public static function complete( int $post_id, array $payload, bool $is_hk = false ): void {
 		$updates = [
-			'nedarim_raw_callback'  => wp_json_encode( $payload ),
+			'nedarim_raw_callback'  => self::encode_json( $payload ),
 			'payment_completed_at'  => current_time( 'c' ),
 		];
 
@@ -130,7 +133,7 @@ class BMM_Submission {
 		$keys = [
 			'first_name', 'last_name', 'email', 'phone', 'city', 'address', 'zeout',
 			'hebrew_name', 'tribe', 'wife_hebrew_name', 'children_hebrew_names',
-			'wants_membership', 'seats_men', 'seats_women', 'sponsorships_selected',
+			'wants_membership', 'seats_men', 'seats_women', 'sponsorships_selected', 'sponsorship_other',
 			'notes', 'payment_type', 'tashlumim',
 			'price_membership', 'price_extra_men', 'price_extra_women', 'price_sponsorships', 'price_total',
 			'nedarim_transaction_id', 'nedarim_keva_id', 'nedarim_confirmation', 'nedarim_last_num',
@@ -151,7 +154,46 @@ class BMM_Submission {
 			}
 		}
 
+		// Recover legacy submissions whose Hebrew names were mangled by the old
+		// encoding bug (\uXXXX escapes left as literal "uXXXX" after wp_unslash).
+		$result['children_hebrew_names'] = array_map(
+			[ __CLASS__, 'recover_mangled_unicode' ],
+			$result['children_hebrew_names']
+		);
+
 		return $result;
+	}
+
+	/**
+	 * JSON-encode a value for storage in post meta.
+	 *
+	 * Two precautions are required for non-ASCII (e.g. Hebrew) content:
+	 *   1. JSON_UNESCAPED_UNICODE keeps characters as readable UTF-8 instead of
+	 *      \uXXXX escapes.
+	 *   2. wp_slash() so that update_metadata()'s internal wp_unslash() does not
+	 *      strip the JSON's own backslashes (the root cause of the mangled
+	 *      "uXXXX" children's names).
+	 */
+	private static function encode_json( $value ): string {
+		return wp_slash( (string) wp_json_encode( $value, JSON_UNESCAPED_UNICODE ) );
+	}
+
+	/**
+	 * Restore Hebrew text that was corrupted by the old storage bug. The bug
+	 * left JSON unicode escapes (י) as bare "u05d9" tokens after WordPress
+	 * stripped the backslashes. Correctly-stored values contain no such tokens,
+	 * so they pass through untouched.
+	 */
+	private static function recover_mangled_unicode( $value ): string {
+		$value = (string) $value;
+		if ( ! preg_match( '/u05[0-9a-fA-F]{2}/', $value ) ) {
+			return $value;
+		}
+		return (string) preg_replace_callback(
+			'/u([0-9a-fA-F]{4})/',
+			fn( array $m ): string => mb_convert_encoding( pack( 'n', hexdec( $m[1] ) ), 'UTF-8', 'UTF-16BE' ),
+			$value
+		);
 	}
 
 	private static function set_meta( int $post_id, array $fields ): void {

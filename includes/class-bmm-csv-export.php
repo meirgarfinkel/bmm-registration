@@ -93,6 +93,9 @@ class BMM_CSV_Export {
 				// form may be deleted
 			}
 		}
+		if ( ! empty( $meta['sponsorship_other'] ) ) {
+			$sponsorship_labels[] = 'Other: ₪' . (int) $meta['sponsorship_other'];
+		}
 
 		$seats_men   = $meta['seats_men'] ?: array_fill_keys( array_keys( BMM_Pricing::DAVENINGS ), 0 );
 		$seats_women = $meta['seats_women'] ?: array_fill_keys( array_keys( BMM_Pricing::DAVENINGS ), 0 );
