@@ -339,37 +339,22 @@
 		} );
 	}
 
-	// "Other" sponsorship: a free-form amount. The amount field only shows when
-	// the donor ticks "Other", and negative amounts are never accepted.
+	// "Other amount" sponsorship: an always-visible free-form field where the
+	// donor can enter any amount. Negative amounts are never accepted.
 	function wireOtherSponsorship() {
-		const toggle = document.getElementById( 'bmm-sponsorship-other-toggle' );
-		const field  = document.getElementById( 'bmm-sponsorship-other-field' );
-		const input  = document.getElementById( 'bmm-sponsorship-other-amount' );
-		if ( ! toggle || ! field || ! input ) return;
-
-		toggle.addEventListener( 'change', function () {
-			field.hidden = ! toggle.checked;
-			if ( ! toggle.checked ) input.value = '';
-			if ( typeof window.bmmFetchPrice === 'function' ) window.bmmFetchPrice();
-		} );
+		const input = document.getElementById( 'bmm-sponsorship-other-amount' );
+		if ( ! input ) return;
 
 		// No negatives — clamp on input.
 		input.addEventListener( 'input', function () {
 			const n = parseInt( input.value, 10 );
 			if ( input.value !== '' && ( isNaN( n ) || n < 0 ) ) input.value = '0';
 		} );
-
-		// Reflect a restored amount (> 0) by re-checking the toggle.
-		if ( readOtherSponsorshipAmount() > 0 ) {
-			toggle.checked = true;
-			field.hidden   = false;
-		}
 	}
 
 	function readOtherSponsorshipAmount() {
-		const toggle = document.getElementById( 'bmm-sponsorship-other-toggle' );
-		const input  = document.getElementById( 'bmm-sponsorship-other-amount' );
-		if ( ! toggle || ! toggle.checked || ! input ) return 0;
+		const input = document.getElementById( 'bmm-sponsorship-other-amount' );
+		if ( ! input ) return 0;
 		return Math.max( 0, parseInt( input.value, 10 ) || 0 );
 	}
 

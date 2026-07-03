@@ -47,10 +47,9 @@
 			wrap.querySelectorAll( '.bmm-sponsorship-check:checked' )
 		).map( el => el.value );
 
-		// "Other" free-form sponsorship amount (only when ticked; never negative)
-		const otherToggle = wrap.querySelector( '#bmm-sponsorship-other-toggle' );
+		// "Other amount" free-form sponsorship (always visible; never negative)
 		const otherInput  = wrap.querySelector( '#bmm-sponsorship-other-amount' );
-		const sponsorshipOther = ( otherToggle && otherToggle.checked && otherInput )
+		const sponsorshipOther = otherInput
 			? Math.max( 0, parseInt( otherInput.value, 10 ) || 0 )
 			: 0;
 

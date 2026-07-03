@@ -7,14 +7,11 @@
 </div>
 
 <div class="bmm-sponsorships bmm-sponsorship-other">
-	<label class="bmm-checkbox bmm-sponsorship-option">
-		<input type="checkbox" id="bmm-sponsorship-other-toggle" />
-		<span><strong><?php esc_html_e( 'Other', 'bmm-registration' ); ?></strong></span>
-	</label>
-	<div class="bmm-sponsorship-other-field" id="bmm-sponsorship-other-field" hidden>
-		<label for="bmm-sponsorship-other-amount"><?php esc_html_e( 'Amount (₪)', 'bmm-registration' ); ?></label>
+	<div class="bmm-sponsorship-option bmm-sponsorship-other-field" id="bmm-sponsorship-other-field">
+		<label for="bmm-sponsorship-other-amount"><strong><?php esc_html_e( 'Other amount', 'bmm-registration' ); ?></strong></label>
+		<p class="description"><?php esc_html_e( 'Enter any amount you would like to sponsor.', 'bmm-registration' ); ?></p>
 		<input type="number" id="bmm-sponsorship-other-amount" name="sponsorship_other"
-			min="0" step="1" inputmode="numeric" placeholder="0" />
+			min="0" step="1" inputmode="numeric" placeholder="₪0" />
 	</div>
 </div>
 
