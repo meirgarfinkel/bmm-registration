@@ -1,0 +1,11 @@
+# Composer-installed dev dependencies (PHPUnit and friends). These are pulled
+# in with `composer install` and are not part of the shipped plugin.
+#
+# The runtime plugin-update-checker library is vendored directly into the repo
+# (it is NOT managed by composer), so it is explicitly kept below.
+/vendor/*
+!/vendor/plugin-update-checker/
+
+# PHPUnit caches
+/.phpunit.cache/
+/.phpunit.result.cache
