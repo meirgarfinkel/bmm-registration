@@ -30,7 +30,7 @@ class BMM_Admin {
 			[ self::class, 'render_forms_list' ]
 		);
 
-		add_submenu_page(
+		$submissions_hook = add_submenu_page(
 			'bmm-registration',
 			__( 'Submissions', 'bmm-registration' ),
 			__( 'Submissions', 'bmm-registration' ),
@@ -39,7 +39,82 @@ class BMM_Admin {
 			[ self::class, 'render_submissions_page' ]
 		);
 
+		// Process bulk actions on the submissions list. The 'load-{hook}' action
+		// fires before any admin HTML is output, so wp_safe_redirect() works here
+		// (it would not inside the page-render callback, where output has begun).
+		if ( $submissions_hook ) {
+			add_action( "load-{$submissions_hook}", [ self::class, 'process_submissions_bulk_action' ] );
+		}
+
 		BMM_Settings::register_settings_page();
+	}
+
+	/**
+	 * Handle "Delete" / "Mark as …" bulk actions from the submissions list.
+	 * Runs on the page's load hook (before output) so it can redirect cleanly.
+	 */
+	public static function process_submissions_bulk_action(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// WP_List_Table exposes the chosen action in 'action' (top) or 'action2'
+		// (bottom). '-1' means "no action selected".
+		$action = '-1';
+		if ( isset( $_REQUEST['action'] ) && $_REQUEST['action'] !== '-1' ) {
+			$action = sanitize_key( wp_unslash( $_REQUEST['action'] ) );
+		} elseif ( isset( $_REQUEST['action2'] ) && $_REQUEST['action2'] !== '-1' ) {
+			$action = sanitize_key( wp_unslash( $_REQUEST['action2'] ) );
+		}
+
+		$status_map = [
+			'mark_completed' => 'completed',
+			'mark_pending'   => 'bmm_pending',
+			'mark_failed'    => 'failed',
+		];
+		if ( $action !== 'delete' && ! isset( $status_map[ $action ] ) ) {
+			return; // not one of our bulk actions
+		}
+
+		// Nonce added by WP_List_Table::display() as bulk-{plural}.
+		check_admin_referer( 'bulk-submissions' );
+
+		$ids = isset( $_REQUEST['submission_ids'] )
+			? array_map( 'intval', (array) wp_unslash( $_REQUEST['submission_ids'] ) )
+			: [];
+		$ids = array_filter( $ids );
+
+		$count = 0;
+		foreach ( $ids as $id ) {
+			$post = get_post( $id );
+			if ( ! $post || $post->post_type !== 'bmm_submission' ) {
+				continue;
+			}
+			if ( $action === 'delete' ) {
+				if ( wp_trash_post( $id ) ) {
+					$count++;
+				}
+			} else {
+				wp_update_post( [ 'ID' => $id, 'post_status' => $status_map[ $action ] ] );
+				$count++;
+			}
+		}
+
+		// Redirect back to the list (dropping the action/nonce/ids params so a
+		// refresh does not re-run the action), preserving the active filters.
+		$redirect = add_query_arg(
+			[
+				'page'           => 'bmm-submissions',
+				'form_id'        => isset( $_REQUEST['form_id'] ) ? (int) $_REQUEST['form_id'] : null,
+				'payment_status' => isset( $_REQUEST['payment_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['payment_status'] ) ) : null,
+				'paged'          => isset( $_REQUEST['paged'] ) ? (int) $_REQUEST['paged'] : null,
+				'bmm_bulk'       => $action,
+				'bmm_count'      => $count,
+			],
+			admin_url( 'admin.php' )
+		);
+		wp_safe_redirect( $redirect );
+		exit;
 	}
 
 	public static function render_forms_list(): void {

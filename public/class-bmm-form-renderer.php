@@ -190,6 +190,9 @@ class BMM_Form_Renderer {
 				'paymentSuccess'  => __( 'Payment completed successfully!', 'bmm-registration' ),
 				'submitting'      => __( 'Saving registration...', 'bmm-registration' ),
 				'processing'      => __( 'Processing payment...', 'bmm-registration' ),
+				'kiddushDate'            => __( 'Date', 'bmm-registration' ),
+				'kiddushDedicationLabel' => __( 'Dedication', 'bmm-registration' ),
+				'kiddushDedication'      => __( "Birthday, anniversary, l'ilur nishmas...", 'bmm-registration' ),
 			],
 		] );
 	}

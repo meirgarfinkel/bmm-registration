@@ -97,6 +97,12 @@ if ( ! empty( $meta['sponsorship_other'] ) ) {
 					<th><?php esc_html_e( 'Sponsorships', 'bmm-registration' ); ?></th>
 					<td><?php echo $selected_sponsorship_labels ? esc_html( implode( ', ', $selected_sponsorship_labels ) ) : esc_html__( 'None', 'bmm-registration' ); ?></td>
 				</tr>
+				<?php if ( ! empty( $meta['kiddush_date'] ) ) : ?>
+				<tr><th><?php esc_html_e( 'Kiddush Date', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['kiddush_date'] ); ?></td></tr>
+				<?php endif; ?>
+				<?php if ( ! empty( $meta['kiddush_dedication'] ) ) : ?>
+				<tr><th><?php esc_html_e( 'Kiddush Dedication', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['kiddush_dedication'] ); ?></td></tr>
+				<?php endif; ?>
 				<?php if ( $meta['notes'] ) : ?>
 				<tr><th><?php esc_html_e( 'Notes', 'bmm-registration' ); ?></th><td><?php echo nl2br( esc_html( $meta['notes'] ) ); ?></td></tr>
 				<?php endif; ?>

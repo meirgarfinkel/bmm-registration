@@ -61,6 +61,14 @@ class BMM_Submission {
 			'sponsorship_other'     => $sponsorship_other,
 		] );
 
+		// Kiddush Fund extras: the sponsored date and a dedication line. Only
+		// stored when the Kiddush Fund is among the selected sponsorships.
+		$is_kiddush = in_array( 'kiddush', $sponsorship_ids, true );
+		self::set_meta( $post_id, [
+			'kiddush_date'       => $is_kiddush ? self::sanitize_date( $data['kiddush_date'] ?? '' ) : '',
+			'kiddush_dedication' => $is_kiddush ? sanitize_text_field( $data['kiddush_dedication'] ?? '' ) : '',
+		] );
+
 		// Notes & payment type. The installment count must respect the chosen
 		// method: "pay in full" (Ragil) is always a single payment, regardless of
 		// whatever the installments selector last held. Only "Tashlumim" keeps the
@@ -134,6 +142,7 @@ class BMM_Submission {
 			'first_name', 'last_name', 'email', 'phone', 'city', 'address', 'zeout',
 			'hebrew_name', 'tribe', 'wife_hebrew_name', 'children_hebrew_names',
 			'wants_membership', 'seats_men', 'seats_women', 'sponsorships_selected', 'sponsorship_other',
+			'kiddush_date', 'kiddush_dedication',
 			'notes', 'payment_type', 'tashlumim',
 			'price_membership', 'price_extra_men', 'price_extra_women', 'price_sponsorships', 'price_total',
 			'nedarim_transaction_id', 'nedarim_keva_id', 'nedarim_confirmation', 'nedarim_last_num',
@@ -194,6 +203,18 @@ class BMM_Submission {
 			fn( array $m ): string => mb_convert_encoding( pack( 'n', hexdec( $m[1] ) ), 'UTF-8', 'UTF-16BE' ),
 			$value
 		);
+	}
+
+	/**
+	 * Accept only a strict Y-m-d calendar date (as produced by <input type="date">).
+	 * Anything malformed or non-existent (e.g. 2026-02-30) becomes an empty string.
+	 */
+	private static function sanitize_date( $value ): string {
+		$value = trim( (string) $value );
+		if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $value, $m ) ) {
+			return '';
+		}
+		return checkdate( (int) $m[2], (int) $m[3], (int) $m[1] ) ? $value : '';
 	}
 
 	private static function set_meta( int $post_id, array $fields ): void {

@@ -313,6 +313,34 @@
 	margin-left: 0.5rem;
 }
 
+/* Kiddush Fund extra fields — revealed when the Kiddush option is ticked. */
+.bmm-sponsorship-subfields {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin: -0.25rem 0 0.25rem;
+	padding: 0.75rem 1rem;
+	border: 1px solid var(--bmm-border);
+	border-top: none;
+	border-radius: 0 0 var(--bmm-radius) var(--bmm-radius);
+	background: var(--bmm-bg);
+}
+
+.bmm-kiddush-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.9rem;
+}
+
+.bmm-kiddush-field input {
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--bmm-border);
+	border-radius: var(--bmm-radius);
+	font-size: 1rem;
+	box-sizing: border-box;
+}
+
 .bmm-sponsorship-other { margin-top: 0.75rem; }
 
 .bmm-sponsorship-other-field {

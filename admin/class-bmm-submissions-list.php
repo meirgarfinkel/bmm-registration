@@ -37,7 +37,10 @@ class BMM_Submissions_List extends \WP_List_Table {
 
 	protected function get_bulk_actions(): array {
 		return [
-			'export_csv' => __( 'Export CSV', 'bmm-registration' ),
+			'mark_completed' => __( 'Mark as Completed', 'bmm-registration' ),
+			'mark_pending'   => __( 'Mark as Pending', 'bmm-registration' ),
+			'mark_failed'    => __( 'Mark as Failed', 'bmm-registration' ),
+			'delete'         => __( 'Delete (move to Trash)', 'bmm-registration' ),
 		];
 	}
 

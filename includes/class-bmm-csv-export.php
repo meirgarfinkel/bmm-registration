@@ -61,7 +61,7 @@ class BMM_CSV_Export {
 			'Seats Men - RH Day 2', 'Seats Men - YK Night', 'Seats Men - YK Day',
 			'Seats Women - RH Night 1', 'Seats Women - RH Day 1', 'Seats Women - RH Night 2',
 			'Seats Women - RH Day 2', 'Seats Women - YK Night', 'Seats Women - YK Day',
-			'Sponsorships Selected', 'Notes', 'Payment Type',
+			'Sponsorships Selected', 'Kiddush Date', 'Kiddush Dedication', 'Notes', 'Payment Type',
 			'Membership Fee (NIS)', 'Extra Men Seats Fee (NIS)', 'Extra Women Seats Fee (NIS)',
 			'Sponsorships Fee (NIS)', 'Total Charged (NIS)',
 			'Nedarim Transaction ID', 'Standing Order ID', 'Approval Number', 'Card Last 4',
@@ -132,6 +132,8 @@ class BMM_CSV_Export {
 			$seats_women[ $dav_keys[2] ] ?? 0, $seats_women[ $dav_keys[3] ] ?? 0,
 			$seats_women[ $dav_keys[4] ] ?? 0, $seats_women[ $dav_keys[5] ] ?? 0,
 			implode( '; ', $sponsorship_labels ),
+			$meta['kiddush_date'],
+			$meta['kiddush_dedication'],
 			$meta['notes'],
 			( $meta['payment_type'] === 'Tashlumim' )
 				? 'Tashlumim (' . (int) ( $meta['tashlumim'] ?? 0 ) . ')'

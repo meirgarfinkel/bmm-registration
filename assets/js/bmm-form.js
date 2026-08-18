@@ -66,6 +66,9 @@
 		// Runs after restoreState so a restored amount re-checks the toggle.
 		wireOtherSponsorship();
 
+		// Kiddush Fund date/dedication fields visibility (after restoreState).
+		wireKiddushFields();
+
 		// Persist on any change
 		wrap.addEventListener( 'change', persistState );
 		wrap.addEventListener( 'input',  persistState );
@@ -204,6 +207,15 @@
 				wrap.querySelectorAll( '.bmm-sponsorship-check:checked' )
 			).map( el => el.value );
 			state.formData.sponsorship_other = readOtherSponsorshipAmount();
+
+			// Kiddush Fund extras — only meaningful when Kiddush is selected.
+			const kiddushSelected = state.formData.sponsorship_ids.includes( 'kiddush' );
+			state.formData.kiddush_date = kiddushSelected
+				? ( wrap.querySelector( '[name="kiddush_date"]' )?.value || '' )
+				: '';
+			state.formData.kiddush_dedication = kiddushSelected
+				? ( wrap.querySelector( '[name="kiddush_dedication"]' )?.value || '' ).trim()
+				: '';
 		}
 
 		if ( step === 5 ) {
@@ -336,7 +348,40 @@
 					<span class="bmm-sponsorship-amount">₪${ escHtml( String( s.amount ) ) }</span>
 				</span>`;
 			container.appendChild( label );
+
+			// The Kiddush Fund carries two extra details — the date being
+			// sponsored and a dedication — shown only while it is selected.
+			if ( s.id === 'kiddush' ) {
+				const ded = cfg.i18n?.kiddushDedication || "Birthday, anniversary, l'ilur nishmas...";
+				const fields = document.createElement( 'div' );
+				fields.className = 'bmm-sponsorship-subfields';
+				fields.id = 'bmm-kiddush-fields';
+				fields.hidden = true;
+				fields.innerHTML = `
+					<label class="bmm-kiddush-field">
+						<span>${ escHtml( cfg.i18n?.kiddushDate || 'Date' ) }</span>
+						<input type="date" name="kiddush_date" />
+					</label>
+					<label class="bmm-kiddush-field">
+						<span>${ escHtml( cfg.i18n?.kiddushDedicationLabel || 'Dedication' ) }</span>
+						<input type="text" name="kiddush_dedication" placeholder="${ escAttr( ded ) }" />
+					</label>`;
+				container.appendChild( fields );
+			}
 		} );
+	}
+
+	// Show the Kiddush date/dedication fields only when the Kiddush Fund
+	// sponsorship is ticked. Runs after restoreState so a restored selection
+	// reveals the fields (and their restored values).
+	function wireKiddushFields() {
+		const check  = wrap.querySelector( '.bmm-sponsorship-check[value="kiddush"]' );
+		const fields = document.getElementById( 'bmm-kiddush-fields' );
+		if ( ! check || ! fields ) return;
+
+		const sync = () => { fields.hidden = ! check.checked; };
+		check.addEventListener( 'change', sync );
+		sync();
 	}
 
 	// "Other amount" sponsorship: an always-visible free-form field where the
