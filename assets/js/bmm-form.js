@@ -198,8 +198,8 @@
 		if ( step === 3 ) {
 			state.formData.wants_membership  = wrap.querySelector( '#bmm_wants_membership' )?.checked  ? 1 : 0;
 			state.formData.wants_guest_seats = wrap.querySelector( '#bmm_wants_guest_seats' )?.checked ? 1 : 0;
-			state.formData.seats_men         = collectSeats( 'bmm-seat-men' );
-			state.formData.seats_women       = collectSeats( 'bmm-seat-women' );
+			state.formData.seats_men         = collectSeats( 'men' );
+			state.formData.seats_women       = collectSeats( 'women' );
 		}
 
 		if ( step === 4 ) {
@@ -228,10 +228,14 @@
 		}
 	}
 
-	function collectSeats( cls ) {
+	// gender is 'men' or 'women' — used verbatim to target the seat inputs.
+	// (Do NOT derive it with cls.includes('men'): the string "women" contains
+	// "men" as a substring, which previously made the women's collection read
+	// the men's inputs and undercharge the submission.)
+	function collectSeats( gender ) {
 		const seats = {};
 		( cfg.davenings || [] ).forEach( key => {
-			const el = wrap.querySelector( `[name="seats_${cls.includes('men') ? 'men' : 'women'}[${key}]"]` );
+			const el = wrap.querySelector( `[name="seats_${ gender }[${ key }]"]` );
 			seats[ key ] = el ? Math.max( 0, parseInt( el.value, 10 ) || 0 ) : 0;
 		} );
 		return seats;
