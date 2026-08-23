@@ -45,6 +45,11 @@
 		document.dispatchEvent( new Event( 'bmm:seats-changed' ) );
 	}
 
+	// Test hook (inert in the browser, where `module` is undefined).
+	if ( typeof module !== 'undefined' && module.exports ) {
+		module.exports = { init };
+	}
+
 	if ( document.readyState === 'loading' ) {
 		document.addEventListener( 'DOMContentLoaded', init );
 	} else {
