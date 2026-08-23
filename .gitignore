@@ -9,3 +9,6 @@
 # PHPUnit caches
 /.phpunit.cache/
 /.phpunit.result.cache
+
+# Node / npm (JS test tooling — jsdom, etc.)
+/node_modules/

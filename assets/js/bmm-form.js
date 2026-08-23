@@ -584,6 +584,13 @@
 		}
 	};
 
+	// ── Test hook ───────────────────────────────────────────────────────────────
+	// Expose internal collectors for the Node/jsdom unit tests. Guarded by a
+	// typeof check so it is inert in the browser (where `module` is undefined).
+	if ( typeof module !== 'undefined' && module.exports ) {
+		module.exports = { init, collectStep, collectSeats };
+	}
+
 	// ── Boot ──────────────────────────────────────────────────────────────────
 
 	if ( document.readyState === 'loading' ) {

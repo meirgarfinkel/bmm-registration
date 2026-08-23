@@ -1,0 +1,12 @@
+{
+	"name": "bmm-registration",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Front-end (JavaScript) unit tests for the BMM Registration plugin.",
+	"scripts": {
+		"test": "node --test tests/js/*.test.js"
+	},
+	"devDependencies": {
+		"jsdom": "^25.0.1"
+	}
+}
