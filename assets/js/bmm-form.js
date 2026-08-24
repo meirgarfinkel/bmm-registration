@@ -197,6 +197,7 @@
 
 		if ( step === 3 ) {
 			state.formData.wants_membership  = wrap.querySelector( '#bmm_wants_membership' )?.checked  ? 1 : 0;
+			state.formData.has_horaat_keva   = wrap.querySelector( '#bmm_has_horaat_keva' )?.checked   ? 1 : 0;
 			state.formData.wants_guest_seats = wrap.querySelector( '#bmm_wants_guest_seats' )?.checked ? 1 : 0;
 			state.formData.seats_men         = collectSeats( 'men' );
 			state.formData.seats_women       = collectSeats( 'women' );
@@ -470,17 +471,23 @@
 	}
 
 	function wireGuestMembershipToggle() {
+		// Three mutually exclusive seat modes: membership, Horaat Keva (already
+		// pays membership separately), and guest seats. Checking any one clears
+		// the others.
 		const membershipCb = document.getElementById( 'bmm_wants_membership' );
 		const guestCb      = document.getElementById( 'bmm_wants_guest_seats' );
-		if ( ! membershipCb || ! guestCb ) return;
+		const horaatKevaCb = document.getElementById( 'bmm_has_horaat_keva' );
 
-		membershipCb.addEventListener( 'change', function () {
-			if ( this.checked ) guestCb.checked = false;
-			if ( typeof window.bmmFetchPrice === 'function' ) window.bmmFetchPrice();
-		} );
-		guestCb.addEventListener( 'change', function () {
-			if ( this.checked ) membershipCb.checked = false;
-			if ( typeof window.bmmFetchPrice === 'function' ) window.bmmFetchPrice();
+		const boxes = [ membershipCb, guestCb, horaatKevaCb ].filter( Boolean );
+		if ( boxes.length < 2 ) return;
+
+		boxes.forEach( box => {
+			box.addEventListener( 'change', function () {
+				if ( this.checked ) {
+					boxes.forEach( other => { if ( other !== this ) other.checked = false; } );
+				}
+				if ( typeof window.bmmFetchPrice === 'function' ) window.bmmFetchPrice();
+			} );
 		} );
 	}
 

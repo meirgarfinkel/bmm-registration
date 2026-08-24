@@ -141,6 +141,9 @@ class BMM_REST_Submit extends \WP_REST_Controller {
 		if ( $pricing['membership'] > 0 ) {
 			$parts[] = 'Membership: ₪' . $pricing['membership'];
 		}
+		if ( ! empty( $pricing['has_horaat_keva'] ) ) {
+			$parts[] = 'Membership via Horaat Keva';
+		}
 		if ( $pricing['extra_men_seats'] > 0 ) {
 			$parts[] = 'Extra men seats (' . $pricing['extra_men_count'] . '): ₪' . $pricing['extra_men_seats'];
 		}

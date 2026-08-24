@@ -56,7 +56,7 @@ class BMM_CSV_Export {
 			'Submission ID', 'Date', 'Payment Status', 'Form Name',
 			'First Name', 'Last Name', 'Email', 'Phone', 'City', 'Address', 'Israeli ID',
 			'Hebrew Name', 'Tribe', 'Wife Hebrew Name', 'Children Hebrew Names',
-			'Membership Purchased',
+			'Membership Purchased', 'Horaat Keva (separate)',
 			'Seats Men - RH Night 1', 'Seats Men - RH Day 1', 'Seats Men - RH Night 2',
 			'Seats Men - RH Day 2', 'Seats Men - YK Night', 'Seats Men - YK Day',
 			'Seats Women - RH Night 1', 'Seats Women - RH Day 1', 'Seats Women - RH Night 2',
@@ -123,6 +123,7 @@ class BMM_CSV_Export {
 			$meta['wife_hebrew_name'],
 			$children,
 			$meta['wants_membership'] ? 'Yes' : 'No',
+			! empty( $meta['has_horaat_keva'] ) ? 'Yes' : 'No',
 			// 6 men seats
 			$seats_men[ $dav_keys[0] ] ?? 0, $seats_men[ $dav_keys[1] ] ?? 0,
 			$seats_men[ $dav_keys[2] ] ?? 0, $seats_men[ $dav_keys[3] ] ?? 0,

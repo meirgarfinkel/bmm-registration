@@ -47,6 +47,7 @@ class BMM_Submission {
 
 		self::set_meta( $post_id, [
 			'wants_membership'  => ! empty( $data['wants_membership'] )  ? 1 : 0,
+			'has_horaat_keva'   => ! empty( $data['has_horaat_keva'] )   ? 1 : 0,
 			'wants_guest_seats' => ! empty( $data['wants_guest_seats'] ) ? 1 : 0,
 			'seats_men'         => self::encode_json( $seats_men ),
 			'seats_women'       => self::encode_json( $seats_women ),
@@ -141,7 +142,7 @@ class BMM_Submission {
 		$keys = [
 			'first_name', 'last_name', 'email', 'phone', 'city', 'address', 'zeout',
 			'hebrew_name', 'tribe', 'wife_hebrew_name', 'children_hebrew_names',
-			'wants_membership', 'seats_men', 'seats_women', 'sponsorships_selected', 'sponsorship_other',
+			'wants_membership', 'has_horaat_keva', 'wants_guest_seats', 'seats_men', 'seats_women', 'sponsorships_selected', 'sponsorship_other',
 			'kiddush_date', 'kiddush_dedication',
 			'notes', 'payment_type', 'tashlumim',
 			'price_membership', 'price_extra_men', 'price_extra_women', 'price_sponsorships', 'price_total',

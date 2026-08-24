@@ -35,6 +35,15 @@
 	<p class="description" style="margin-left:1.6rem;"><?php esc_html_e( 'No membership. Every seat charged at the guest rate — no seats included.', 'bmm-registration' ); ?></p>
 </div>
 
+<!-- Existing Horaat Keva (mutually exclusive with membership and guest seats) -->
+<div class="bmm-field bmm-horaat-keva-field" id="bmm-horaat-keva-field">
+	<label class="bmm-checkbox">
+		<input type="checkbox" name="has_horaat_keva" id="bmm_has_horaat_keva" value="1" />
+		<span><?php esc_html_e( 'I already pay Membership through separate Horaat Keva', 'bmm-registration' ); ?></span>
+	</label>
+	<p class="description" style="margin-left:1.6rem;"><?php esc_html_e( "Includes 1 men's seat and 1 women's seat for all davenings.", 'bmm-registration' ); ?></p>
+</div>
+
 <!-- Same for all toggle -->
 <div class="bmm-seats-header">
 	<h4>

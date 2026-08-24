@@ -71,6 +71,7 @@ if ( ! empty( $meta['sponsorship_other'] ) ) {
 			<h2><?php esc_html_e( 'Membership & Seats', 'bmm-registration' ); ?></h2>
 			<table class="widefat striped">
 				<tr><th><?php esc_html_e( 'Membership', 'bmm-registration' ); ?></th><td><?php echo $meta['wants_membership'] ? esc_html__( 'Yes', 'bmm-registration' ) : esc_html__( 'No', 'bmm-registration' ); ?></td></tr>
+				<tr><th><?php esc_html_e( 'Horaat Keva (separate)', 'bmm-registration' ); ?></th><td><?php echo ! empty( $meta['has_horaat_keva'] ) ? esc_html__( 'Yes', 'bmm-registration' ) : esc_html__( 'No', 'bmm-registration' ); ?></td></tr>
 			</table>
 			<table class="widefat striped" style="margin-top:8px;">
 				<thead><tr><th><?php esc_html_e( 'Davening', 'bmm-registration' ); ?></th><th><?php esc_html_e( 'Men', 'bmm-registration' ); ?></th><th><?php esc_html_e( 'Women', 'bmm-registration' ); ?></th></tr></thead>

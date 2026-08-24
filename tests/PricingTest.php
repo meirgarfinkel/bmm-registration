@@ -113,6 +113,64 @@ final class PricingTest extends TestCase {
 		$this->assertSame( 500, $out['membership'] );
 	}
 
+	// ── Horaat Keva path ──────────────────────────────────────────────────────
+
+	public function test_horaat_keva_charges_no_membership_fee_and_includes_one_each(): void {
+		$form = $this->makeForm();
+		$out  = BMM_Pricing::calculate( $form, [
+			'has_horaat_keva' => true,
+			'seats_men'       => $this->seats( [ 'rh_day1' => 1 ] ), // == 1 included, no extra
+			'seats_women'     => $this->seats( [ 'rh_day1' => 1 ] ), // == 1 included, no extra
+		] );
+
+		$this->assertTrue( $out['has_horaat_keva'] );
+		$this->assertSame( 0, $out['membership'] );
+		$this->assertSame( 0, $out['extra_men_seats'] );
+		$this->assertSame( 0, $out['extra_women_seats'] );
+		$this->assertSame( 0, $out['total'] );
+	}
+
+	public function test_horaat_keva_bills_extra_seats_at_member_rate(): void {
+		$form = $this->makeForm();
+		$out  = BMM_Pricing::calculate( $form, [
+			'has_horaat_keva' => true,
+			'seats_men'       => $this->seats( [ 'rh_day1' => 3 ] ), // 3 - 1 included = 2 extra
+			'seats_women'     => $this->seats( [ 'yk_day' => 2 ] ),  // 2 - 1 included = 1 extra
+		] );
+
+		$this->assertSame( 2, $out['extra_men_count'] );
+		$this->assertSame( 1, $out['extra_women_count'] );
+		$this->assertSame( 200, $out['extra_men_seats'] );   // 2 * 100
+		$this->assertSame( 100, $out['extra_women_seats'] ); // 1 * 100
+		$this->assertSame( 300, $out['total'] );             // 0 membership + 200 + 100
+	}
+
+	public function test_membership_takes_priority_over_horaat_keva(): void {
+		$form = $this->makeForm();
+		$out  = BMM_Pricing::calculate( $form, [
+			'wants_membership' => true,
+			'has_horaat_keva'  => true, // must be ignored while membership is on
+			'seats_men'        => $this->seats( [ 'rh_day1' => 2 ] ),
+		] );
+
+		$this->assertFalse( $out['has_horaat_keva'] );
+		$this->assertSame( 500, $out['membership'] );
+	}
+
+	public function test_horaat_keva_takes_priority_over_guest_seats(): void {
+		$form = $this->makeForm();
+		$out  = BMM_Pricing::calculate( $form, [
+			'has_horaat_keva'   => true,
+			'wants_guest_seats' => true, // must be ignored while Horaat Keva is on
+			'seats_men'         => $this->seats( [ 'rh_day1' => 2 ] ), // 1 extra @ member rate
+		] );
+
+		$this->assertTrue( $out['has_horaat_keva'] );
+		$this->assertFalse( $out['wants_guest_seats'] );
+		$this->assertSame( 0, $out['guest_men_seats'] );
+		$this->assertSame( 100, $out['extra_men_seats'] ); // 1 extra * 100
+	}
+
 	// ── Sponsorships ────────────────────────────────────────────────────────────
 
 	public function test_predefined_sponsorships_sum(): void {

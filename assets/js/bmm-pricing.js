@@ -32,6 +32,7 @@
 
 		// Collect current values directly from DOM (live, before state.formData is committed)
 		const wantsMembership  = wrap.querySelector( '#bmm_wants_membership' )?.checked  || false;
+		const hasHoraatKeva    = wrap.querySelector( '#bmm_has_horaat_keva' )?.checked   || false;
 		const wantsGuestSeats  = wrap.querySelector( '#bmm_wants_guest_seats' )?.checked || false;
 
 		const seatsMen   = {};
@@ -63,6 +64,7 @@
 				body:    JSON.stringify( {
 					form_id:           cfg.formId,
 					wants_membership:  wantsMembership,
+					has_horaat_keva:   hasHoraatKeva,
 					wants_guest_seats: wantsGuestSeats,
 					seats_men:         seatsMen,
 					seats_women:       seatsWomen,

@@ -42,6 +42,7 @@ function registrationHtml() {
 
 			<div class="bmm-form-step" data-step="3">
 				<input type="checkbox" id="bmm_wants_membership" value="1" />
+				<input type="checkbox" id="bmm_has_horaat_keva" value="1" />
 				<input type="checkbox" id="bmm_wants_guest_seats" value="1" />
 				${ seatGridHtml() }
 			</div>

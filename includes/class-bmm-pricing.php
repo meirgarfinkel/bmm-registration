@@ -15,6 +15,13 @@ class BMM_Pricing {
 		'yk_day'    => 'Yom Kippur Day',
 	];
 
+	// Seats included when the registrant already pays membership through a
+	// separate Horaat Keva (standing order). No membership fee is charged here;
+	// these seats are included free, and anything beyond them is billed at the
+	// member extra-seat rate. Kept in sync with the Step 3 checkbox label.
+	public const HK_INCLUDED_MEN   = 1;
+	public const HK_INCLUDED_WOMEN = 1;
+
 	/**
 	 * Calculate full price breakdown.
 	 *
@@ -37,8 +44,13 @@ class BMM_Pricing {
 	 * }
 	 */
 	public static function calculate( BMM_Form_Config $form, array $data ): array {
+		// Three mutually exclusive seat modes, in priority order:
+		//   membership       — pay the annual membership fee here
+		//   horaat_keva      — already pay membership via a separate standing order
+		//   guest_seats      — no membership; every seat billed at the guest rate
 		$wants_membership  = ! empty( $data['wants_membership'] );
-		$wants_guest_seats = ! empty( $data['wants_guest_seats'] ) && ! $wants_membership;
+		$has_horaat_keva   = ! empty( $data['has_horaat_keva'] ) && ! $wants_membership;
+		$wants_guest_seats = ! empty( $data['wants_guest_seats'] ) && ! $wants_membership && ! $has_horaat_keva;
 		$seats_men         = self::normalize_seats( $data['seats_men'] ?? [] );
 		$seats_women       = self::normalize_seats( $data['seats_women'] ?? [] );
 		$sponsorship_ids   = array_map( 'strval', (array) ( $data['sponsorship_ids'] ?? [] ) );
@@ -53,10 +65,18 @@ class BMM_Pricing {
 		$extra_men_fee     = 0;
 		$extra_women_fee   = 0;
 
-		if ( $wants_membership ) {
-			$membership_fee    = $form->membership_price;
-			$included_men      = $form->membership_included_men;
-			$included_women    = $form->membership_included_women;
+		if ( $wants_membership || $has_horaat_keva ) {
+			if ( $wants_membership ) {
+				$membership_fee = $form->membership_price;
+				$included_men   = $form->membership_included_men;
+				$included_women = $form->membership_included_women;
+			} else {
+				// Horaat Keva: membership already paid separately (no fee here),
+				// with a fixed 1 men's + 1 women's seat included.
+				$membership_fee = 0;
+				$included_men   = self::HK_INCLUDED_MEN;
+				$included_women = self::HK_INCLUDED_WOMEN;
+			}
 			$extra_men_count   = max( 0, $max_men   - $included_men );
 			$extra_women_count = max( 0, $max_women - $included_women );
 			$extra_men_fee     = $extra_men_count   * $form->extra_seat_price;
@@ -122,6 +142,7 @@ class BMM_Pricing {
 			'guest_men_count'     => $guest_men_count,
 			'guest_women_count'   => $guest_women_count,
 			'wants_guest_seats'   => $wants_guest_seats,
+			'has_horaat_keva'     => $has_horaat_keva,
 			'sponsorships'        => $sponsorship_breakdown,
 			'sponsorships_total'  => $sponsorships_total,
 			'total'               => $total,
