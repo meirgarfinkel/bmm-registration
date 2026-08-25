@@ -24,3 +24,5 @@ require_once $root . '/includes/class-bmm-form-config.php';
 require_once $root . '/includes/class-bmm-pricing.php';
 require_once $root . '/includes/class-bmm-submission.php';
 require_once $root . '/includes/class-bmm-callback-handler.php';
+require_once $root . '/includes/class-bmm-csv-export.php';
+require_once $root . '/admin/class-bmm-admin.php';

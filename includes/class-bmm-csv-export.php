@@ -102,19 +102,30 @@ class BMM_CSV_Export {
 			$sponsorship_labels[] = 'Other: ₪' . (int) $meta['sponsorship_other'];
 		}
 
-		$seats_men   = $meta['seats_men'] ?: array_fill_keys( array_keys( BMM_Pricing::DAVENINGS ), 0 );
-		$seats_women = $meta['seats_women'] ?: array_fill_keys( array_keys( BMM_Pricing::DAVENINGS ), 0 );
+		return self::build_row( $post->ID, (string) $post->post_date, (string) $post->post_status, $form_name, $meta, $sponsorship_labels );
+	}
+
+	/**
+	 * Assemble one CSV row from already-resolved values. Pure (no WordPress
+	 * calls) so it can be unit-tested and kept column-aligned with get_headers().
+	 *
+	 * @param array    $meta               Submission meta (see BMM_Submission::get_meta()).
+	 * @param string[] $sponsorship_labels Resolved sponsorship label strings.
+	 */
+	public static function build_row( int $id, string $date, string $status, string $form_name, array $meta, array $sponsorship_labels ): array {
+		$seats_men   = ! empty( $meta['seats_men'] )   ? $meta['seats_men']   : array_fill_keys( array_keys( BMM_Pricing::DAVENINGS ), 0 );
+		$seats_women = ! empty( $meta['seats_women'] ) ? $meta['seats_women'] : array_fill_keys( array_keys( BMM_Pricing::DAVENINGS ), 0 );
 
 		$dav_keys = array_keys( BMM_Pricing::DAVENINGS );
 
-		$children = is_array( $meta['children_hebrew_names'] )
+		$children = is_array( $meta['children_hebrew_names'] ?? null )
 			? implode( '; ', $meta['children_hebrew_names'] )
 			: '';
 
 		return [
-			$post->ID,
-			$post->post_date,
-			$post->post_status,
+			$id,
+			$date,
+			$status,
 			$form_name,
 			$meta['first_name'],
 			$meta['last_name'],

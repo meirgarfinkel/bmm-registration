@@ -222,25 +222,11 @@ class BMM_Submissions_List extends \WP_List_Table {
 		submit_button( __( 'Filter', 'bmm-registration' ), 'secondary', 'filter_action', false );
 		echo '</div>';
 
-		// Export button
-		echo '<div class="alignleft actions">';
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		wp_nonce_field( 'bmm_export_csv', 'bmm_export_nonce' );
-		echo '<input type="hidden" name="action" value="bmm_export_csv">';
-		echo '<input type="hidden" name="form_id" value="' . esc_attr( $current_form ) . '">';
-		echo '<input type="hidden" name="status" value="' . esc_attr( $current_status ) . '">';
-		submit_button( __( 'Export CSV', 'bmm-registration' ), 'secondary', 'export', false );
-		echo '</form>';
-		echo '</div>';
-
-		// Payment audit: flag "completed" submissions that have no transaction
-		// evidence, so historical false completions can be found and reviewed.
-		echo '<div class="alignleft actions">';
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		wp_nonce_field( 'bmm_audit_payments', 'bmm_audit_nonce' );
-		echo '<input type="hidden" name="action" value="bmm_audit_payments">';
-		submit_button( __( 'Audit Payments', 'bmm-registration' ), 'secondary', 'audit', false );
-		echo '</form>';
-		echo '</div>';
+		// NOTE: The Export CSV and Audit Payments controls are intentionally NOT
+		// rendered here. extra_tablenav() output lives inside the list table's
+		// wrapping <form method="get">, and those two are their own
+		// <form method="post"> — nesting forms is invalid HTML and silently
+		// breaks the surrounding bulk-action form. They are rendered as
+		// standalone forms in admin/views/submissions-list-page.php instead.
 	}
 }

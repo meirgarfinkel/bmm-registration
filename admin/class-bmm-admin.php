@@ -54,6 +54,18 @@ class BMM_Admin {
 	 * Handle "Delete" / "Mark as …" bulk actions from the submissions list.
 	 * Runs on the page's load hook (before output) so it can redirect cleanly.
 	 */
+	/**
+	 * Map a submissions bulk-action key to the post_status it sets, or null if
+	 * it is not one of our status actions. Pure, so it can be unit-tested.
+	 */
+	public static function bulk_action_new_status( string $action ): ?string {
+		return [
+			'mark_completed' => 'completed',
+			'mark_pending'   => 'bmm_pending',
+			'mark_failed'    => 'failed',
+		][ $action ] ?? null;
+	}
+
 	public static function process_submissions_bulk_action(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
@@ -68,12 +80,8 @@ class BMM_Admin {
 			$action = sanitize_key( wp_unslash( $_REQUEST['action2'] ) );
 		}
 
-		$status_map = [
-			'mark_completed' => 'completed',
-			'mark_pending'   => 'bmm_pending',
-			'mark_failed'    => 'failed',
-		];
-		if ( $action !== 'delete' && ! isset( $status_map[ $action ] ) ) {
+		$new_status = self::bulk_action_new_status( $action );
+		if ( $action !== 'delete' && $new_status === null ) {
 			return; // not one of our bulk actions
 		}
 
@@ -96,7 +104,7 @@ class BMM_Admin {
 					$count++;
 				}
 			} else {
-				wp_update_post( [ 'ID' => $id, 'post_status' => $status_map[ $action ] ] );
+				wp_update_post( [ 'ID' => $id, 'post_status' => $new_status ] );
 				$count++;
 			}
 		}

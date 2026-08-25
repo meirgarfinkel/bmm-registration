@@ -90,3 +90,14 @@
 		display: none;
 	}
 }
+
+/* Submissions Export / Audit toolbar — standalone forms above the list
+   (kept out of the list's <form> so bulk actions and export both work). */
+.bmm-submissions-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 8px 0 12px;
+}
+.bmm-submissions-toolbar form { margin: 0; }

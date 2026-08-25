@@ -52,6 +52,29 @@
 			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Payment audit: every completed submission has a recorded payment.', 'bmm-registration' ); ?></p></div>
 		<?php endif; ?>
 	<?php endif; ?>
+
+	<?php
+	// Export / Audit toolbar. These are their own POST forms and MUST live
+	// OUTSIDE the list table's <form method="get"> below — nesting forms is
+	// invalid HTML and breaks both these buttons and the bulk-action form.
+	$current_form   = isset( $_GET['form_id'] ) ? (int) $_GET['form_id'] : 0;
+	$current_status = ! empty( $_GET['payment_status'] ) ? sanitize_key( wp_unslash( $_GET['payment_status'] ) ) : 'completed';
+	?>
+	<div class="bmm-submissions-toolbar">
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php wp_nonce_field( 'bmm_export_csv', 'bmm_export_nonce' ); ?>
+			<input type="hidden" name="action" value="bmm_export_csv">
+			<input type="hidden" name="form_id" value="<?php echo esc_attr( (string) $current_form ); ?>">
+			<input type="hidden" name="status" value="<?php echo esc_attr( $current_status ); ?>">
+			<?php submit_button( __( 'Export CSV', 'bmm-registration' ), 'secondary', 'export', false ); ?>
+		</form>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php wp_nonce_field( 'bmm_audit_payments', 'bmm_audit_nonce' ); ?>
+			<input type="hidden" name="action" value="bmm_audit_payments">
+			<?php submit_button( __( 'Audit Payments', 'bmm-registration' ), 'secondary', 'audit', false ); ?>
+		</form>
+	</div>
+
 	<form method="get">
 		<input type="hidden" name="page" value="bmm-submissions" />
 		<div class="bmm-submissions-scroll">
