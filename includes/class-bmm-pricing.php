@@ -15,6 +15,13 @@ class BMM_Pricing {
 		'yk_day'    => 'Yom Kippur Day',
 	];
 
+	// Davenings grouped by holiday. Used for the at-a-glance "seats for RH / YK"
+	// summaries in the admin list and CSV export.
+	public const HOLIDAYS = [
+		'rh' => [ 'rh_night1', 'rh_day1', 'rh_night2', 'rh_day2' ],
+		'yk' => [ 'yk_night', 'yk_day' ],
+	];
+
 	// Seats included when the registrant already pays membership through a
 	// separate Horaat Keva (standing order). No membership fee is charged here;
 	// these seats are included free, and anything beyond them is billed at the
@@ -147,6 +154,22 @@ class BMM_Pricing {
 			'sponsorships_total'  => $sponsorships_total,
 			'total'               => $total,
 		];
+	}
+
+	/**
+	 * Peak number of seats reserved for a holiday group — the maximum requested
+	 * across that holiday's davenings. A registrant holds one physical seat for
+	 * the whole holiday, so the max across its sessions is the seat count (and it
+	 * matches how the price is computed from the busiest davening).
+	 *
+	 * @param array  $seats   Seats keyed (or indexed) by davening.
+	 * @param string $holiday 'rh' or 'yk'.
+	 */
+	public static function seats_for_holiday( array $seats, string $holiday ): int {
+		$seats = self::normalize_seats( $seats );
+		$keys  = self::HOLIDAYS[ $holiday ] ?? [];
+		$vals  = array_map( static fn( string $k ): int => $seats[ $k ] ?? 0, $keys );
+		return $vals ? max( $vals ) : 0;
 	}
 
 	/** Normalize seats array to exactly 6 non-negative ints. */

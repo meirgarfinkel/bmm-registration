@@ -131,6 +131,23 @@ class BMM_Submission {
 		do_action( 'bmm_payment_completed', $post_id, $payload );
 	}
 
+	/**
+	 * Record a Nedarim callback that did NOT represent an approved payment
+	 * (declined card, error, or an ambiguous payload with no transaction id).
+	 * The submission is intentionally left in its current state — it must never
+	 * become "completed" without a real payment — while the raw payload and an
+	 * attempt counter are kept for admin review.
+	 */
+	public static function record_failed_attempt( int $post_id, array $payload ): void {
+		$attempts = (int) get_post_meta( $post_id, '_bmm_sub_failed_attempts', true );
+		self::set_meta( $post_id, [
+			'failed_attempts'      => $attempts + 1,
+			'last_failed_callback' => self::encode_json( $payload ),
+		] );
+
+		do_action( 'bmm_payment_failed_attempt', $post_id, $payload );
+	}
+
 	public static function fail( int $post_id ): void {
 		wp_update_post( [
 			'ID'          => $post_id,
@@ -147,7 +164,7 @@ class BMM_Submission {
 			'notes', 'payment_type', 'tashlumim',
 			'price_membership', 'price_extra_men', 'price_extra_women', 'price_sponsorships', 'price_total',
 			'nedarim_transaction_id', 'nedarim_keva_id', 'nedarim_confirmation', 'nedarim_last_num',
-			'payment_completed_at', 'amount_mismatch',
+			'payment_completed_at', 'amount_mismatch', 'failed_attempts',
 		];
 
 		$result = [];

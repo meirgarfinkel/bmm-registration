@@ -50,6 +50,26 @@ final class PricingTest extends TestCase {
 		$this->assertSame( 2, $out['yk_day'] );
 	}
 
+	// ── seats_for_holiday ────────────────────────────────────────────────────────
+
+	public function test_seats_for_holiday_is_peak_across_that_holidays_davenings(): void {
+		$seats = $this->seats( [ 'rh_night1' => 2, 'rh_day1' => 5, 'yk_day' => 3 ] );
+		$this->assertSame( 5, BMM_Pricing::seats_for_holiday( $seats, 'rh' ) );
+		$this->assertSame( 3, BMM_Pricing::seats_for_holiday( $seats, 'yk' ) );
+	}
+
+	public function test_seats_for_holiday_ignores_the_other_holiday(): void {
+		// A large YK request must not leak into the RH count and vice-versa.
+		$seats = $this->seats( [ 'yk_night' => 9 ] );
+		$this->assertSame( 0, BMM_Pricing::seats_for_holiday( $seats, 'rh' ) );
+		$this->assertSame( 9, BMM_Pricing::seats_for_holiday( $seats, 'yk' ) );
+	}
+
+	public function test_seats_for_holiday_empty_and_unknown_holiday(): void {
+		$this->assertSame( 0, BMM_Pricing::seats_for_holiday( [], 'rh' ) );
+		$this->assertSame( 0, BMM_Pricing::seats_for_holiday( $this->seats( [ 'rh_day1' => 4 ] ), 'nope' ) );
+	}
+
 	// ── Membership path ─────────────────────────────────────────────────────────
 
 	public function test_membership_only_no_extra_seats(): void {

@@ -21,6 +21,10 @@ class BMM_Submissions_List extends \WP_List_Table {
 			'name'           => __( 'Name', 'bmm-registration' ),
 			'email'          => __( 'Email', 'bmm-registration' ),
 			'form'           => __( 'Form', 'bmm-registration' ),
+			'men_rh'         => __( "Men's seats (RH)", 'bmm-registration' ),
+			'women_rh'       => __( "Women's seats (RH)", 'bmm-registration' ),
+			'men_yk'         => __( "Men's seats (YK)", 'bmm-registration' ),
+			'women_yk'       => __( "Women's seats (YK)", 'bmm-registration' ),
 			'total'          => __( 'Total (₪)', 'bmm-registration' ),
 			'payment_type'   => __( 'Payment Type', 'bmm-registration' ),
 			'payment_status' => __( 'Payment Status', 'bmm-registration' ),
@@ -102,6 +106,29 @@ class BMM_Submissions_List extends \WP_List_Table {
 		}
 		$form = get_post( $item->post_parent );
 		return $form ? esc_html( $form->post_title ) : '—';
+	}
+
+	/** Decode a stored per-davening seats meta value ('men' or 'women'). */
+	private function seats_meta( int $post_id, string $gender ): array {
+		$raw = get_post_meta( $post_id, "_bmm_sub_seats_{$gender}", true );
+		$decoded = $raw ? json_decode( $raw, true ) : [];
+		return is_array( $decoded ) ? $decoded : [];
+	}
+
+	public function column_men_rh( \WP_Post $item ): string {
+		return (string) BMM_Pricing::seats_for_holiday( $this->seats_meta( $item->ID, 'men' ), 'rh' );
+	}
+
+	public function column_women_rh( \WP_Post $item ): string {
+		return (string) BMM_Pricing::seats_for_holiday( $this->seats_meta( $item->ID, 'women' ), 'rh' );
+	}
+
+	public function column_men_yk( \WP_Post $item ): string {
+		return (string) BMM_Pricing::seats_for_holiday( $this->seats_meta( $item->ID, 'men' ), 'yk' );
+	}
+
+	public function column_women_yk( \WP_Post $item ): string {
+		return (string) BMM_Pricing::seats_for_holiday( $this->seats_meta( $item->ID, 'women' ), 'yk' );
 	}
 
 	public function column_total( \WP_Post $item ): string {

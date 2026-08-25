@@ -132,6 +132,12 @@ if ( ! empty( $meta['sponsorship_other'] ) ) {
 				<tr><th><?php esc_html_e( 'Approval Number', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['nedarim_confirmation'] ?: '—' ); ?></td></tr>
 				<tr><th><?php esc_html_e( 'Card Last 4', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['nedarim_last_num'] ?: '—' ); ?></td></tr>
 				<tr><th><?php esc_html_e( 'Completed At', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['payment_completed_at'] ?: '—' ); ?></td></tr>
+				<?php if ( ! empty( $meta['failed_attempts'] ) ) : ?>
+				<tr><th><?php esc_html_e( 'Failed Payment Attempts', 'bmm-registration' ); ?></th><td><?php echo esc_html( (string) (int) $meta['failed_attempts'] ); ?></td></tr>
+				<?php endif; ?>
+				<?php if ( ! empty( $meta['amount_mismatch'] ) ) : ?>
+				<tr><th><?php esc_html_e( 'Amount Mismatch', 'bmm-registration' ); ?></th><td><strong style="color:#b32d2e;"><?php esc_html_e( 'Yes — callback amount differed from the locked total', 'bmm-registration' ); ?></strong></td></tr>
+				<?php endif; ?>
 			</table>
 
 			<h3><?php esc_html_e( 'Update Payment Status', 'bmm-registration' ); ?></h3>
