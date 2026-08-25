@@ -68,4 +68,32 @@ final class SubmissionQueryTest extends TestCase {
 		// Nothing to pay → no transaction expected, so not a false completion.
 		$this->assertFalse( BMM_Submission::completion_is_unverified( 0, '', '' ) );
 	}
+
+	// ── record_looks_paid ─────────────────────────────────────────────────────────
+
+	public function test_record_looks_paid_uses_stored_callback_when_present(): void {
+		// A stored decline payload must count as NOT paid, even though a stale
+		// transaction id is present — this is the case the old heuristic missed.
+		$declined = [ 'Status' => 'Error', 'TransactionId' => '999' ];
+		$this->assertFalse( BMM_Submission::record_looks_paid( $declined, '999', '' ) );
+
+		$approved = [ 'TransactionId' => '123456', 'Confirmation' => '0012345' ];
+		$this->assertTrue( BMM_Submission::record_looks_paid( $approved, '123456', '' ) );
+	}
+
+	public function test_record_looks_paid_falls_back_to_ids_without_callback(): void {
+		$this->assertTrue( BMM_Submission::record_looks_paid( null, '123456', '' ) );
+		$this->assertTrue( BMM_Submission::record_looks_paid( null, '', '98765' ) );
+		$this->assertFalse( BMM_Submission::record_looks_paid( null, '', '' ) );
+	}
+
+	public function test_completion_unverified_honors_stored_decline_callback(): void {
+		// Owes money, has a (stale) transaction id, but the stored callback shows
+		// the charge was declined → still unverified.
+		$declined = [ 'Status' => 'Declined', 'TransactionId' => '999' ];
+		$this->assertTrue( BMM_Submission::completion_is_unverified( 500, '999', '', $declined ) );
+
+		$approved = [ 'TransactionId' => '123456' ];
+		$this->assertFalse( BMM_Submission::completion_is_unverified( 500, '123456', '', $approved ) );
+	}
 }

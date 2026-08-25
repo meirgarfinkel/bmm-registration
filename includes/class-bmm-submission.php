@@ -125,6 +125,7 @@ class BMM_Submission {
 
 		// A real payment landed — clear any "unverified" audit flag.
 		delete_post_meta( $post_id, '_bmm_sub_payment_unverified' );
+		delete_post_meta( $post_id, '_bmm_sub_payment_unverified_reason' );
 
 		wp_update_post( [
 			'ID'          => $post_id,
@@ -152,17 +153,36 @@ class BMM_Submission {
 	}
 
 	/**
-	 * Pure rule: is a "completed" submission unverified (no payment evidence)?
-	 * True when it owes money (locked total > 0) yet has neither a Nedarim
-	 * transaction id nor a Horaat Keva id. Extracted so it can be unit-tested
-	 * without WordPress; BMM_Admin::is_payment_unverified() reads the meta and
-	 * delegates here.
+	 * Pure rule: does a completed submission actually look paid?
+	 *
+	 * The authoritative signal is the stored Nedarim callback re-run through the
+	 * same success gate that guards live completions (so a declined attempt that
+	 * still carried a transaction id is correctly seen as unpaid). When no raw
+	 * callback was stored (e.g. a manual admin completion), fall back to the
+	 * presence of a transaction id or Horaat Keva id.
+	 *
+	 * @param array|null $raw_payload Decoded stored callback, or null if none.
 	 */
-	public static function completion_is_unverified( int $total, string $transaction_id, string $keva_id ): bool {
+	public static function record_looks_paid( ?array $raw_payload, string $transaction_id, string $keva_id ): bool {
+		if ( is_array( $raw_payload ) && $raw_payload ) {
+			return BMM_Callback_Handler::payment_succeeded( $raw_payload );
+		}
+		return trim( $transaction_id ) !== '' || trim( $keva_id ) !== '';
+	}
+
+	/**
+	 * Pure rule: is a "completed" submission unverified (no payment evidence)?
+	 * True when it owes money (locked total > 0) yet does not look paid. Extracted
+	 * so it can be unit-tested without WordPress; BMM_Admin::is_payment_unverified()
+	 * reads the meta and delegates here.
+	 *
+	 * @param array|null $raw_payload Decoded stored callback, or null if none.
+	 */
+	public static function completion_is_unverified( int $total, string $transaction_id, string $keva_id, ?array $raw_payload = null ): bool {
 		if ( $total <= 0 ) {
 			return false; // nothing to pay — no transaction expected
 		}
-		return trim( $transaction_id ) === '' && trim( $keva_id ) === '';
+		return ! self::record_looks_paid( $raw_payload, $transaction_id, $keva_id );
 	}
 
 	/**

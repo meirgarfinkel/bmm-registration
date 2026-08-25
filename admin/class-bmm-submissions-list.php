@@ -160,11 +160,17 @@ class BMM_Submissions_List extends \WP_List_Table {
 		];
 		$html = $status_labels[ $item->post_status ] ?? esc_html( $item->post_status );
 
-		// Flag completions with no payment evidence (see the payment audit).
+		// Flag completions the payment audit could not verify (see the audit).
 		if ( $item->post_status === 'completed' && get_post_meta( $item->ID, '_bmm_sub_payment_unverified', true ) ) {
-			$html .= ' <span class="bmm-status bmm-status--failed" title="'
-				. esc_attr__( 'Marked completed but no Nedarim transaction was recorded — review this payment.', 'bmm-registration' )
-				. '">' . esc_html__( '⚠ Unverified', 'bmm-registration' ) . '</span>';
+			$reason = (string) get_post_meta( $item->ID, '_bmm_sub_payment_unverified_reason', true );
+			if ( $reason === 'duplicate' ) {
+				$label = __( '⚠ Duplicate', 'bmm-registration' );
+				$title = __( 'Duplicate of another completed submission from the same registrant — only one payment was made.', 'bmm-registration' );
+			} else {
+				$label = __( '⚠ Unverified', 'bmm-registration' );
+				$title = __( 'Marked completed but no successful Nedarim payment was recorded — review this payment.', 'bmm-registration' );
+			}
+			$html .= ' <span class="bmm-status bmm-status--failed" title="' . esc_attr( $title ) . '">' . esc_html( $label ) . '</span>';
 		}
 
 		return $html;

@@ -197,13 +197,66 @@ class BMM_Admin {
 			'fields'         => 'ids',
 		] );
 
-		$flagged = 0;
+		// Gather each completed submission's payment facts once.
+		$records = [];
 		foreach ( $completed as $id ) {
-			if ( self::is_payment_unverified( (int) $id ) ) {
+			$id      = (int) $id;
+			$post    = get_post( $id );
+			$records[ $id ] = [
+				'id'    => $id,
+				'form'  => $post ? (int) $post->post_parent : 0,
+				'total' => (int) get_post_meta( $id, '_bmm_sub_price_total', true ),
+				'paid'  => self::record_looks_paid( $id ),
+				'email' => strtolower( trim( (string) get_post_meta( $id, '_bmm_sub_email', true ) ) ),
+				'phone' => preg_replace( '/\D/', '', (string) get_post_meta( $id, '_bmm_sub_phone', true ) ),
+			];
+		}
+
+		// Reason per record. Signal 1: owes money but doesn't look paid.
+		$reasons = [];
+		foreach ( $records as $id => $r ) {
+			if ( $r['total'] > 0 && ! $r['paid'] ) {
+				$reasons[ $id ] = 'no_payment';
+			}
+		}
+
+		// Signal 2: same-registrant duplicates. Group completed submissions by
+		// (form + email|phone); when a group has a genuinely-paid member, every
+		// other member is a duplicate of a single payment and is flagged too.
+		$groups = [];
+		foreach ( $records as $r ) {
+			$who = $r['email'] !== '' ? 'e:' . $r['email'] : ( $r['phone'] !== '' ? 'p:' . $r['phone'] : '' );
+			if ( $who === '' ) {
+				continue; // no identity to group on — judged individually only
+			}
+			$groups[ $r['form'] . '|' . $who ][] = $r['id'];
+		}
+		foreach ( $groups as $ids ) {
+			if ( count( $ids ) < 2 ) {
+				continue;
+			}
+			$paid_ids = array_values( array_filter( $ids, static fn( $i ) => $records[ $i ]['paid'] ) );
+			if ( ! $paid_ids ) {
+				continue; // none paid → already handled by signal 1 (or nothing owed)
+			}
+			// Keep the earliest paid submission; flag the rest of the group.
+			$keep = min( $paid_ids );
+			foreach ( $ids as $i ) {
+				if ( $i !== $keep && ! isset( $reasons[ $i ] ) ) {
+					$reasons[ $i ] = 'duplicate';
+				}
+			}
+		}
+
+		$flagged = 0;
+		foreach ( $records as $id => $r ) {
+			if ( isset( $reasons[ $id ] ) ) {
 				update_post_meta( $id, '_bmm_sub_payment_unverified', 1 );
+				update_post_meta( $id, '_bmm_sub_payment_unverified_reason', $reasons[ $id ] );
 				$flagged++;
 			} else {
 				delete_post_meta( $id, '_bmm_sub_payment_unverified' );
+				delete_post_meta( $id, '_bmm_sub_payment_unverified_reason' );
 			}
 		}
 
@@ -220,14 +273,35 @@ class BMM_Admin {
 	}
 
 	/**
+	 * Whether a completed submission looks paid — authoritatively, by re-running
+	 * its stored Nedarim callback through the live success gate (falling back to
+	 * a stored transaction/Keva id when no raw callback was captured).
+	 */
+	public static function record_looks_paid( int $submission_id ): bool {
+		$raw     = (string) get_post_meta( $submission_id, '_bmm_sub_nedarim_raw_callback', true );
+		$payload = $raw !== '' ? json_decode( $raw, true ) : null;
+
+		return BMM_Submission::record_looks_paid(
+			is_array( $payload ) ? $payload : null,
+			(string) get_post_meta( $submission_id, '_bmm_sub_nedarim_transaction_id', true ),
+			(string) get_post_meta( $submission_id, '_bmm_sub_nedarim_keva_id', true )
+		);
+	}
+
+	/**
 	 * A "completed" submission is unverified when it owes money (locked total
-	 * > 0) yet has neither a Nedarim transaction id nor a Horaat Keva id.
+	 * > 0) yet does not look paid. (Duplicate detection lives in the audit, which
+	 * needs cross-submission context.)
 	 */
 	public static function is_payment_unverified( int $submission_id ): bool {
+		$raw     = (string) get_post_meta( $submission_id, '_bmm_sub_nedarim_raw_callback', true );
+		$payload = $raw !== '' ? json_decode( $raw, true ) : null;
+
 		return BMM_Submission::completion_is_unverified(
 			(int) get_post_meta( $submission_id, '_bmm_sub_price_total', true ),
 			(string) get_post_meta( $submission_id, '_bmm_sub_nedarim_transaction_id', true ),
-			(string) get_post_meta( $submission_id, '_bmm_sub_nedarim_keva_id', true )
+			(string) get_post_meta( $submission_id, '_bmm_sub_nedarim_keva_id', true ),
+			is_array( $payload ) ? $payload : null
 		);
 	}
 
