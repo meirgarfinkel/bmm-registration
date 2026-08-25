@@ -52,6 +52,24 @@
 			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Payment audit: every completed submission has a recorded payment.', 'bmm-registration' ); ?></p></div>
 		<?php endif; ?>
 	<?php endif; ?>
+	<?php
+	// Feedback after the one-click "Mark Unverified as Failed" cleanup.
+	if ( isset( $_GET['bmm_reverted'] ) ) :
+		$reverted = (int) $_GET['bmm_reverted'];
+		?>
+		<div class="notice notice-success is-dismissible"><p><?php
+			echo esc_html( sprintf(
+				/* translators: %d = number of submissions */
+				_n(
+					'%d unverified submission marked as Failed.',
+					'%d unverified submissions marked as Failed.',
+					$reverted,
+					'bmm-registration'
+				),
+				$reverted
+			) );
+		?></p></div>
+	<?php endif; ?>
 
 	<?php
 	// Export / Audit toolbar. These are their own POST forms and MUST live
@@ -72,6 +90,12 @@
 			<?php wp_nonce_field( 'bmm_audit_payments', 'bmm_audit_nonce' ); ?>
 			<input type="hidden" name="action" value="bmm_audit_payments">
 			<?php submit_button( __( 'Audit Payments', 'bmm-registration' ), 'secondary', 'audit', false ); ?>
+		</form>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
+			onsubmit="return confirm('<?php echo esc_js( __( 'Mark every unverified completed submission as Failed? Run this after reviewing the flagged rows.', 'bmm-registration' ) ); ?>');">
+			<?php wp_nonce_field( 'bmm_revert_unverified', 'bmm_revert_nonce' ); ?>
+			<input type="hidden" name="action" value="bmm_revert_unverified">
+			<?php submit_button( __( 'Mark Unverified as Failed', 'bmm-registration' ), 'delete', 'revert', false ); ?>
 		</form>
 	</div>
 

@@ -9,6 +9,7 @@ class BMM_Admin {
 		add_action( 'admin_post_bmm_export_csv', [ 'BMM_CSV_Export', 'handle_export_request' ] );
 		add_action( 'admin_post_bmm_update_submission_status', [ self::class, 'handle_status_update' ] );
 		add_action( 'admin_post_bmm_audit_payments', [ self::class, 'handle_payment_audit' ] );
+		add_action( 'admin_post_bmm_revert_unverified', [ self::class, 'handle_revert_unverified' ] );
 	}
 
 	public static function register_menus(): void {
@@ -51,10 +52,6 @@ class BMM_Admin {
 	}
 
 	/**
-	 * Handle "Delete" / "Mark as …" bulk actions from the submissions list.
-	 * Runs on the page's load hook (before output) so it can redirect cleanly.
-	 */
-	/**
 	 * Map a submissions bulk-action key to the post_status it sets, or null if
 	 * it is not one of our status actions. Pure, so it can be unit-tested.
 	 */
@@ -66,35 +63,37 @@ class BMM_Admin {
 		][ $action ] ?? null;
 	}
 
-	public static function process_submissions_bulk_action(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
+	/**
+	 * Resolve the chosen bulk action from a request. WP_List_Table puts it in
+	 * 'action' (top controls) or 'action2' (bottom controls); '-1' means none.
+	 * Returns '' when no bulk action was selected. Pure — unit-testable.
+	 */
+	public static function resolve_current_bulk_action( array $request ): string {
+		foreach ( [ 'action', 'action2' ] as $key ) {
+			if ( isset( $request[ $key ] ) && $request[ $key ] !== '-1' && $request[ $key ] !== '' ) {
+				return sanitize_key( (string) $request[ $key ] );
+			}
 		}
+		return '';
+	}
 
-		// WP_List_Table exposes the chosen action in 'action' (top) or 'action2'
-		// (bottom). '-1' means "no action selected".
-		$action = '-1';
-		if ( isset( $_REQUEST['action'] ) && $_REQUEST['action'] !== '-1' ) {
-			$action = sanitize_key( wp_unslash( $_REQUEST['action'] ) );
-		} elseif ( isset( $_REQUEST['action2'] ) && $_REQUEST['action2'] !== '-1' ) {
-			$action = sanitize_key( wp_unslash( $_REQUEST['action2'] ) );
+	/**
+	 * Apply a bulk action to a set of submission IDs and return how many were
+	 * changed. Skips anything that is not a bmm_submission. Extracted from the
+	 * request/redirect wrapper so the actual mutation logic is unit-testable.
+	 */
+	public static function apply_bulk_action( string $action, array $ids ): int {
+		if ( $action !== 'delete' && self::bulk_action_new_status( $action ) === null ) {
+			return 0; // not one of our actions
 		}
-
 		$new_status = self::bulk_action_new_status( $action );
-		if ( $action !== 'delete' && $new_status === null ) {
-			return; // not one of our bulk actions
-		}
-
-		// Nonce added by WP_List_Table::display() as bulk-{plural}.
-		check_admin_referer( 'bulk-submissions' );
-
-		$ids = isset( $_REQUEST['submission_ids'] )
-			? array_map( 'intval', (array) wp_unslash( $_REQUEST['submission_ids'] ) )
-			: [];
-		$ids = array_filter( $ids );
 
 		$count = 0;
 		foreach ( $ids as $id ) {
+			$id = (int) $id;
+			if ( $id <= 0 ) {
+				continue;
+			}
 			$post = get_post( $id );
 			if ( ! $post || $post->post_type !== 'bmm_submission' ) {
 				continue;
@@ -108,6 +107,30 @@ class BMM_Admin {
 				$count++;
 			}
 		}
+		return $count;
+	}
+
+	public static function process_submissions_bulk_action(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$action = self::resolve_current_bulk_action( wp_unslash( $_REQUEST ) );
+		if ( $action === '' ) {
+			return; // no bulk action selected (e.g. the Filter button)
+		}
+		if ( $action !== 'delete' && self::bulk_action_new_status( $action ) === null ) {
+			return; // not one of our bulk actions
+		}
+
+		// Nonce added by WP_List_Table::display() as bulk-{plural}.
+		check_admin_referer( 'bulk-submissions' );
+
+		$ids = isset( $_REQUEST['submission_ids'] )
+			? array_map( 'intval', (array) wp_unslash( $_REQUEST['submission_ids'] ) )
+			: [];
+
+		$count = self::apply_bulk_action( $action, $ids );
 
 		// Redirect back to the list (dropping the action/nonce/ids params so a
 		// refresh does not re-run the action), preserving the active filters.
@@ -273,6 +296,45 @@ class BMM_Admin {
 				'page'              => 'bmm-submissions',
 				'bmm_audit'         => 1,
 				'bmm_audit_flagged' => $flagged,
+			],
+			admin_url( 'admin.php' )
+		);
+		wp_safe_redirect( $redirect );
+		exit;
+	}
+
+	/**
+	 * One-click cleanup: mark every audit-flagged (unverified) completed
+	 * submission as Failed. Uses the reliable admin-post POST flow (not the
+	 * WP_List_Table bulk mechanism), so it is a dependable path to correct the
+	 * historical false completions. Run "Audit Payments" first to populate flags.
+	 */
+	public static function handle_revert_unverified(): void {
+		if (
+			! isset( $_POST['bmm_revert_nonce'] ) ||
+			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['bmm_revert_nonce'] ) ), 'bmm_revert_unverified' ) ||
+			! current_user_can( 'manage_options' )
+		) {
+			wp_die( esc_html__( 'Unauthorized', 'bmm-registration' ) );
+		}
+
+		$ids = get_posts( [
+			'post_type'      => 'bmm_submission',
+			'post_status'    => 'completed',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'meta_query'     => [
+				[ 'key' => '_bmm_sub_payment_unverified', 'value' => 1, 'compare' => '=' ],
+			],
+		] );
+
+		$count = self::apply_bulk_action( 'mark_failed', array_map( 'intval', (array) $ids ) );
+
+		$redirect = add_query_arg(
+			[
+				'page'           => 'bmm-submissions',
+				'payment_status' => 'failed',
+				'bmm_reverted'   => $count,
 			],
 			admin_url( 'admin.php' )
 		);

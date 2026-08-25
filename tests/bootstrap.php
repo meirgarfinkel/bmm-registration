@@ -19,6 +19,8 @@ if ( ! function_exists( '__' ) ) {
 	}
 }
 
+require_once __DIR__ . '/wp-stubs.php';
+
 $root = dirname( __DIR__ );
 require_once $root . '/includes/class-bmm-form-config.php';
 require_once $root . '/includes/class-bmm-pricing.php';
