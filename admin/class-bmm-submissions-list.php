@@ -63,6 +63,15 @@ class BMM_Submissions_List extends \WP_List_Table {
 			'order'          => 'DESC',
 		];
 
+		// Special pseudo-status: "completed" submissions flagged by the payment
+		// audit as having no transaction evidence (see BMM_Admin::handle_payment_audit()).
+		if ( $status_filter === 'unverified' ) {
+			$args['post_status'] = 'completed';
+			$args['meta_query']  = [
+				[ 'key' => '_bmm_sub_payment_unverified', 'value' => 1, 'compare' => '=' ],
+			];
+		}
+
 		if ( $form_filter ) {
 			$args['post_parent'] = $form_filter;
 		}
@@ -153,7 +162,16 @@ class BMM_Submissions_List extends \WP_List_Table {
 			'completed'   => '<span class="bmm-status bmm-status--completed">' . esc_html__( 'Completed', 'bmm-registration' ) . '</span>',
 			'failed'      => '<span class="bmm-status bmm-status--failed">'    . esc_html__( 'Failed', 'bmm-registration' )    . '</span>',
 		];
-		return $status_labels[ $item->post_status ] ?? esc_html( $item->post_status );
+		$html = $status_labels[ $item->post_status ] ?? esc_html( $item->post_status );
+
+		// Flag completions with no payment evidence (see the payment audit).
+		if ( $item->post_status === 'completed' && get_post_meta( $item->ID, '_bmm_sub_payment_unverified', true ) ) {
+			$html .= ' <span class="bmm-status bmm-status--failed" title="'
+				. esc_attr__( 'Marked completed but no Nedarim transaction was recorded — review this payment.', 'bmm-registration' )
+				. '">' . esc_html__( '⚠ Unverified', 'bmm-registration' ) . '</span>';
+		}
+
+		return $html;
 	}
 
 	public function column_date( \WP_Post $item ): string {
@@ -185,7 +203,13 @@ class BMM_Submissions_List extends \WP_List_Table {
 
 		// Status filter
 		echo '<select name="payment_status"><option value="">' . esc_html__( 'All Statuses', 'bmm-registration' ) . '</option>';
-		foreach ( [ 'bmm_pending' => 'Pending', 'completed' => 'Completed', 'failed' => 'Failed' ] as $val => $label ) {
+		$status_options = [
+			'bmm_pending' => __( 'Pending', 'bmm-registration' ),
+			'completed'   => __( 'Completed', 'bmm-registration' ),
+			'failed'      => __( 'Failed', 'bmm-registration' ),
+			'unverified'  => __( 'Completed — unverified', 'bmm-registration' ),
+		];
+		foreach ( $status_options as $val => $label ) {
 			echo '<option value="' . esc_attr( $val ) . '"' . selected( $current_status, $val, false ) . '>' . esc_html( $label ) . '</option>';
 		}
 		echo '</select>';
@@ -201,6 +225,16 @@ class BMM_Submissions_List extends \WP_List_Table {
 		echo '<input type="hidden" name="form_id" value="' . esc_attr( $current_form ) . '">';
 		echo '<input type="hidden" name="status" value="' . esc_attr( $current_status ) . '">';
 		submit_button( __( 'Export CSV', 'bmm-registration' ), 'secondary', 'export', false );
+		echo '</form>';
+		echo '</div>';
+
+		// Payment audit: flag "completed" submissions that have no transaction
+		// evidence, so historical false completions can be found and reviewed.
+		echo '<div class="alignleft actions">';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		wp_nonce_field( 'bmm_audit_payments', 'bmm_audit_nonce' );
+		echo '<input type="hidden" name="action" value="bmm_audit_payments">';
+		submit_button( __( 'Audit Payments', 'bmm-registration' ), 'secondary', 'audit', false );
 		echo '</form>';
 		echo '</div>';
 	}

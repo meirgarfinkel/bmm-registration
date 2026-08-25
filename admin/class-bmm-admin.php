@@ -8,6 +8,7 @@ class BMM_Admin {
 		add_action( 'admin_enqueue_scripts', [ self::class, 'enqueue_assets' ] );
 		add_action( 'admin_post_bmm_export_csv', [ 'BMM_CSV_Export', 'handle_export_request' ] );
 		add_action( 'admin_post_bmm_update_submission_status', [ self::class, 'handle_status_update' ] );
+		add_action( 'admin_post_bmm_audit_payments', [ self::class, 'handle_payment_audit' ] );
 	}
 
 	public static function register_menus(): void {
@@ -167,6 +168,69 @@ class BMM_Admin {
 
 		wp_safe_redirect( admin_url( 'admin.php?page=bmm-submissions&submission_id=' . $submission_id ) );
 		exit;
+	}
+
+	/**
+	 * One-time (repeatable) audit that flags submissions marked "completed" that
+	 * carry no evidence of an actual payment — i.e. a positive locked total but
+	 * neither a Nedarim transaction id nor a Horaat Keva id. These are the false
+	 * completions created before the callback-success gate was added.
+	 *
+	 * This only FLAGS (meta _bmm_sub_payment_unverified) — it never changes a
+	 * submission's status — so a legitimate manual completion is never clobbered.
+	 * Admins review the flagged rows (via the "Completed — unverified" filter)
+	 * and correct them by hand. Re-running clears stale flags.
+	 */
+	public static function handle_payment_audit(): void {
+		if (
+			! isset( $_POST['bmm_audit_nonce'] ) ||
+			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['bmm_audit_nonce'] ) ), 'bmm_audit_payments' ) ||
+			! current_user_can( 'manage_options' )
+		) {
+			wp_die( esc_html__( 'Unauthorized', 'bmm-registration' ) );
+		}
+
+		$completed = get_posts( [
+			'post_type'      => 'bmm_submission',
+			'post_status'    => 'completed',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		] );
+
+		$flagged = 0;
+		foreach ( $completed as $id ) {
+			if ( self::is_payment_unverified( (int) $id ) ) {
+				update_post_meta( $id, '_bmm_sub_payment_unverified', 1 );
+				$flagged++;
+			} else {
+				delete_post_meta( $id, '_bmm_sub_payment_unverified' );
+			}
+		}
+
+		$redirect = add_query_arg(
+			[
+				'page'              => 'bmm-submissions',
+				'bmm_audit'         => 1,
+				'bmm_audit_flagged' => $flagged,
+			],
+			admin_url( 'admin.php' )
+		);
+		wp_safe_redirect( $redirect );
+		exit;
+	}
+
+	/**
+	 * A "completed" submission is unverified when it owes money (locked total
+	 * > 0) yet has neither a Nedarim transaction id nor a Horaat Keva id.
+	 */
+	public static function is_payment_unverified( int $submission_id ): bool {
+		$total = (int) get_post_meta( $submission_id, '_bmm_sub_price_total', true );
+		if ( $total <= 0 ) {
+			return false; // nothing to pay — no transaction expected
+		}
+		$txn  = trim( (string) get_post_meta( $submission_id, '_bmm_sub_nedarim_transaction_id', true ) );
+		$keva = trim( (string) get_post_meta( $submission_id, '_bmm_sub_nedarim_keva_id', true ) );
+		return $txn === '' && $keva === '';
 	}
 
 	public static function enqueue_assets( string $hook ): void {

@@ -123,6 +123,9 @@ class BMM_Submission {
 
 		self::set_meta( $post_id, $updates );
 
+		// A real payment landed — clear any "unverified" audit flag.
+		delete_post_meta( $post_id, '_bmm_sub_payment_unverified' );
+
 		wp_update_post( [
 			'ID'          => $post_id,
 			'post_status' => 'completed',
