@@ -48,3 +48,45 @@
 	font-size: 1rem;
 	margin-bottom: 0.5rem;
 }
+
+/* Submissions list — mobile.
+   WordPress hides secondary table columns and the top toolbar actions on
+   narrow screens. For this list we want every column visible (horizontally
+   scrollable) and the Filter / Export / Audit actions reachable on phones. */
+.bmm-submissions-scroll {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+@media screen and ( max-width: 782px ) {
+	/* Override core's per-column hiding so all columns stay in the table. */
+	.bmm-submissions-wrap .wp-list-table.submissions thead th,
+	.bmm-submissions-wrap .wp-list-table.submissions tbody td,
+	.bmm-submissions-wrap .wp-list-table.submissions tbody th {
+		display: table-cell;
+	}
+
+	/* Keep the table its natural width so columns don't crush; the wrapper
+	   scrolls horizontally instead. */
+	.bmm-submissions-wrap .wp-list-table.submissions {
+		min-width: 760px;
+		table-layout: auto;
+	}
+
+	/* Core hides the toolbar filter/export controls on mobile — keep ours. */
+	.bmm-submissions-wrap .tablenav.top .actions {
+		display: block;
+		float: none;
+		margin: 0 0 8px;
+	}
+	.bmm-submissions-wrap .tablenav.top .actions select,
+	.bmm-submissions-wrap .tablenav.top .actions input[type="submit"] {
+		display: inline-block;
+		margin-bottom: 4px;
+	}
+	/* The bottom nav duplicates the top actions we already show; hide it to
+	   avoid a second stack of controls on mobile. */
+	.bmm-submissions-wrap .tablenav.bottom .actions {
+		display: none;
+	}
+}

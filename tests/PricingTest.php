@@ -70,6 +70,16 @@ final class PricingTest extends TestCase {
 		$this->assertSame( 0, BMM_Pricing::seats_for_holiday( $this->seats( [ 'rh_day1' => 4 ] ), 'nope' ) );
 	}
 
+	public function test_holidays_partition_all_davenings_exactly(): void {
+		// Guard against drift: every davening belongs to exactly one holiday
+		// group, and the groups introduce no unknown keys.
+		$grouped = array_merge( ...array_values( BMM_Pricing::HOLIDAYS ) );
+		sort( $grouped );
+		$all = array_keys( BMM_Pricing::DAVENINGS );
+		sort( $all );
+		$this->assertSame( $all, $grouped );
+	}
+
 	// ── Membership path ─────────────────────────────────────────────────────────
 
 	public function test_membership_only_no_extra_seats(): void {

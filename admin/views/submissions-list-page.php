@@ -1,5 +1,5 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
-<div class="wrap">
+<div class="wrap bmm-submissions-wrap">
 	<h1><?php esc_html_e( 'Submissions', 'bmm-registration' ); ?></h1>
 	<?php
 	// Feedback after a bulk action (see BMM_Admin::process_submissions_bulk_action()).
@@ -54,6 +54,8 @@
 	<?php endif; ?>
 	<form method="get">
 		<input type="hidden" name="page" value="bmm-submissions" />
-		<?php $list_table->display(); ?>
+		<div class="bmm-submissions-scroll">
+			<?php $list_table->display(); ?>
+		</div>
 	</form>
 </div>

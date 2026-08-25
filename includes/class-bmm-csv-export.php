@@ -15,13 +15,17 @@ class BMM_CSV_Export {
 		$form_id = isset( $_POST['form_id'] ) ? (int) $_POST['form_id'] : 0;
 		$status  = isset( $_POST['status'] ) ? sanitize_key( $_POST['status'] ) : '';
 
-		$query_args = [
-			'post_type'      => 'bmm_submission',
-			'post_status'    => $status ?: [ 'bmm_pending', 'completed', 'failed' ],
-			'posts_per_page' => -1,
-			'orderby'        => 'date',
-			'order'          => 'DESC',
-		];
+		// Export the same set the list is filtered to (defaults to "completed",
+		// supports "all" and the audit-only "unverified"). See resolve_list_status().
+		$query_args = array_merge(
+			[
+				'post_type'      => 'bmm_submission',
+				'posts_per_page' => -1,
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+			],
+			BMM_Submission::resolve_list_status( $status )
+		);
 
 		if ( $form_id ) {
 			$query_args['post_parent'] = $form_id;

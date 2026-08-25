@@ -54,23 +54,19 @@ class BMM_Submissions_List extends \WP_List_Table {
 		$status_filter = isset( $_GET['payment_status'] ) ? sanitize_key( $_GET['payment_status'] ) : '';
 		$form_filter   = isset( $_GET['form_id'] ) ? (int) $_GET['form_id'] : 0;
 
-		$args = [
-			'post_type'      => 'bmm_submission',
-			'post_status'    => $status_filter ?: [ 'bmm_pending', 'completed', 'failed' ],
-			'posts_per_page' => $per_page,
-			'paged'          => $current_page,
-			'orderby'        => 'date',
-			'order'          => 'DESC',
-		];
-
-		// Special pseudo-status: "completed" submissions flagged by the payment
-		// audit as having no transaction evidence (see BMM_Admin::handle_payment_audit()).
-		if ( $status_filter === 'unverified' ) {
-			$args['post_status'] = 'completed';
-			$args['meta_query']  = [
-				[ 'key' => '_bmm_sub_payment_unverified', 'value' => 1, 'compare' => '=' ],
-			];
-		}
+		// Resolve the status filter (defaults to "completed", supports the
+		// "all" and audit-only "unverified" pseudo-statuses). See
+		// BMM_Submission::resolve_list_status().
+		$args = array_merge(
+			[
+				'post_type'      => 'bmm_submission',
+				'posts_per_page' => $per_page,
+				'paged'          => $current_page,
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+			],
+			BMM_Submission::resolve_list_status( $status_filter )
+		);
 
 		if ( $form_filter ) {
 			$args['post_parent'] = $form_filter;
@@ -190,7 +186,9 @@ class BMM_Submissions_List extends \WP_List_Table {
 		] );
 
 		$current_form   = isset( $_GET['form_id'] ) ? (int) $_GET['form_id'] : 0;
-		$current_status = isset( $_GET['payment_status'] ) ? sanitize_key( $_GET['payment_status'] ) : '';
+		// The list defaults to "Completed" when no explicit filter is chosen, so
+		// the dropdown must show Completed selected on first load too.
+		$current_status = ! empty( $_GET['payment_status'] ) ? sanitize_key( $_GET['payment_status'] ) : 'completed';
 
 		echo '<div class="alignleft actions">';
 
@@ -202,8 +200,9 @@ class BMM_Submissions_List extends \WP_List_Table {
 		echo '</select>';
 
 		// Status filter
-		echo '<select name="payment_status"><option value="">' . esc_html__( 'All Statuses', 'bmm-registration' ) . '</option>';
+		echo '<select name="payment_status">';
 		$status_options = [
+			'all'         => __( 'All Statuses', 'bmm-registration' ),
 			'bmm_pending' => __( 'Pending', 'bmm-registration' ),
 			'completed'   => __( 'Completed', 'bmm-registration' ),
 			'failed'      => __( 'Failed', 'bmm-registration' ),

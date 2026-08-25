@@ -151,6 +151,54 @@ class BMM_Submission {
 		do_action( 'bmm_payment_failed_attempt', $post_id, $payload );
 	}
 
+	/**
+	 * Pure rule: is a "completed" submission unverified (no payment evidence)?
+	 * True when it owes money (locked total > 0) yet has neither a Nedarim
+	 * transaction id nor a Horaat Keva id. Extracted so it can be unit-tested
+	 * without WordPress; BMM_Admin::is_payment_unverified() reads the meta and
+	 * delegates here.
+	 */
+	public static function completion_is_unverified( int $total, string $transaction_id, string $keva_id ): bool {
+		if ( $total <= 0 ) {
+			return false; // nothing to pay — no transaction expected
+		}
+		return trim( $transaction_id ) === '' && trim( $keva_id ) === '';
+	}
+
+	/**
+	 * Pure rule: resolve the Submissions-list status filter into WP_Query args.
+	 * An empty request defaults to "completed" (the common case admins want to
+	 * see); 'all' shows every status; 'unverified' narrows to completed rows the
+	 * payment audit flagged. Extracted for unit testing (no WordPress calls).
+	 *
+	 * @return array{post_status: string|string[], meta_query?: array}
+	 */
+	public static function resolve_list_status( string $requested ): array {
+		$all       = [ 'bmm_pending', 'completed', 'failed' ];
+		$effective = $requested !== '' ? $requested : 'completed';
+
+		switch ( $effective ) {
+			case 'all':
+				return [ 'post_status' => $all ];
+
+			case 'unverified':
+				return [
+					'post_status' => 'completed',
+					'meta_query'  => [
+						[ 'key' => '_bmm_sub_payment_unverified', 'value' => 1, 'compare' => '=' ],
+					],
+				];
+
+			case 'bmm_pending':
+			case 'completed':
+			case 'failed':
+				return [ 'post_status' => $effective ];
+
+			default:
+				return [ 'post_status' => $all ];
+		}
+	}
+
 	public static function fail( int $post_id ): void {
 		wp_update_post( [
 			'ID'          => $post_id,

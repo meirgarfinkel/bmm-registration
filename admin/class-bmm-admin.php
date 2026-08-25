@@ -224,13 +224,11 @@ class BMM_Admin {
 	 * > 0) yet has neither a Nedarim transaction id nor a Horaat Keva id.
 	 */
 	public static function is_payment_unverified( int $submission_id ): bool {
-		$total = (int) get_post_meta( $submission_id, '_bmm_sub_price_total', true );
-		if ( $total <= 0 ) {
-			return false; // nothing to pay — no transaction expected
-		}
-		$txn  = trim( (string) get_post_meta( $submission_id, '_bmm_sub_nedarim_transaction_id', true ) );
-		$keva = trim( (string) get_post_meta( $submission_id, '_bmm_sub_nedarim_keva_id', true ) );
-		return $txn === '' && $keva === '';
+		return BMM_Submission::completion_is_unverified(
+			(int) get_post_meta( $submission_id, '_bmm_sub_price_total', true ),
+			(string) get_post_meta( $submission_id, '_bmm_sub_nedarim_transaction_id', true ),
+			(string) get_post_meta( $submission_id, '_bmm_sub_nedarim_keva_id', true )
+		);
 	}
 
 	public static function enqueue_assets( string $hook ): void {
