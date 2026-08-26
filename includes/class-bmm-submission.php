@@ -98,6 +98,48 @@ class BMM_Submission {
 	}
 
 	/**
+	 * Build the submission-input array for the admin "Simulate Nedarim callback"
+	 * diagnostic. Uses whatever real form data the admin entered (so the test
+	 * record reflects their name and seats — including "same for all davenings"),
+	 * falling back to clearly-marked dummy values for anything missing. Pure (no
+	 * WordPress calls); create_draft() sanitises everything downstream.
+	 */
+	public static function build_simulation_data( array $params ): array {
+		$has = static fn( string $k ): bool => isset( $params[ $k ] ) && $params[ $k ] !== '';
+
+		$seats_men   = (array) ( $params['seats_men'] ?? [] );
+		$seats_women = (array) ( $params['seats_women'] ?? [] );
+		$any_seats   = array_sum( array_map( 'intval', array_values( $seats_men ) ) )
+		             + array_sum( array_map( 'intval', array_values( $seats_women ) ) );
+
+		// Honour an explicit membership choice; otherwise default to membership
+		// only when no seats were entered, so a bare simulation still has a total.
+		$wants_membership = array_key_exists( 'wants_membership', $params )
+			? ! empty( $params['wants_membership'] )
+			: ( $any_seats === 0 );
+
+		return [
+			'first_name'        => $has( 'first_name' ) ? $params['first_name'] : 'Test',
+			'last_name'         => $has( 'last_name' )  ? $params['last_name']  : 'Simulation',
+			'email'             => $has( 'email' )      ? $params['email']      : 'simulation@example.com',
+			'phone'             => $has( 'phone' )      ? $params['phone']      : '0500000000',
+			'city'              => $params['city']    ?? '',
+			'address'           => $params['address'] ?? '',
+			'zeout'             => $params['zeout']   ?? '',
+			'hebrew_name'       => $has( 'hebrew_name' ) ? $params['hebrew_name'] : 'בדיקה',
+			'tribe'             => $has( 'tribe' ) ? $params['tribe'] : 'yisrael',
+			'payment_type'      => 'Ragil',
+			'wants_membership'  => $wants_membership,
+			'has_horaat_keva'   => ! empty( $params['has_horaat_keva'] ),
+			'wants_guest_seats' => ! empty( $params['wants_guest_seats'] ),
+			'seats_men'         => $seats_men,
+			'seats_women'       => $seats_women,
+			'sponsorship_ids'   => (array) ( $params['sponsorship_ids'] ?? [] ),
+			'sponsorship_other' => $params['sponsorship_other'] ?? 0,
+		];
+	}
+
+	/**
 	 * Update submission with payment completion data from Nedarim Plus callback.
 	 */
 	public static function complete( int $post_id, array $payload, bool $is_hk = false ): void {

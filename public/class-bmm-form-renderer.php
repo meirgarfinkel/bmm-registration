@@ -129,6 +129,37 @@ class BMM_Form_Renderer {
 		// without a live card. Admin-only endpoint, authenticated via wp_rest nonce.
 		var simBtn = document.getElementById( 'bmm-simulate-callback' );
 		var simOut = document.getElementById( 'bmm-simulate-result' );
+
+		// Collect what the admin actually entered on the form so the simulated
+		// TEST submission reflects it — including the per-davening seat inputs,
+		// which bmm-seats.js keeps in sync when "Same for all davenings" is on.
+		function collectSimData() {
+			var wrap = document.getElementById( 'bmm-registration' );
+			var data = { form_id: <?php echo $fid; ?> };
+			if ( ! wrap ) { return data; }
+			[ 'first_name', 'last_name', 'phone', 'email', 'city', 'address', 'zeout', 'hebrew_name' ].forEach( function ( n ) {
+				var el = wrap.querySelector( '[name="' + n + '"]' );
+				if ( el ) { data[ n ] = el.value; }
+			} );
+			var tribe = wrap.querySelector( '[name="tribe"]:checked' );
+			data.tribe = tribe ? tribe.value : 'yisrael';
+			function checked( id ) { var el = wrap.querySelector( id ); return !! ( el && el.checked ); }
+			data.wants_membership  = checked( '#bmm_wants_membership' );
+			data.has_horaat_keva   = checked( '#bmm_has_horaat_keva' );
+			data.wants_guest_seats = checked( '#bmm_wants_guest_seats' );
+			var men = {}, women = {};
+			( ( window.bmmConfig && window.bmmConfig.davenings ) || [] ).forEach( function ( k ) {
+				var m = wrap.querySelector( '[name="seats_men[' + k + ']"]' );
+				var w = wrap.querySelector( '[name="seats_women[' + k + ']"]' );
+				men[ k ]   = m ? Math.max( 0, parseInt( m.value, 10 ) || 0 ) : 0;
+				women[ k ] = w ? Math.max( 0, parseInt( w.value, 10 ) || 0 ) : 0;
+			} );
+			data.seats_men = men;
+			data.seats_women = women;
+			data.payment_type = 'Ragil';
+			return data;
+		}
+
 		if ( simBtn && simOut ) {
 			simBtn.addEventListener( 'click', function () {
 				simBtn.disabled = true;
@@ -139,7 +170,7 @@ class BMM_Form_Renderer {
 						'Content-Type': 'application/json',
 						'X-WP-Nonce': <?php echo wp_json_encode( $rest_nonce ); ?>
 					},
-					body: JSON.stringify( { form_id: <?php echo $fid; ?> } )
+					body: JSON.stringify( collectSimData() )
 				} )
 				.then( function ( r ) { return r.text().then( function ( t ) {
 					simOut.textContent = 'simulate-callback → HTTP ' + r.status + '\n' + t;

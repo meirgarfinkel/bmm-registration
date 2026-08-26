@@ -39,23 +39,21 @@ class BMM_REST_Callback extends \WP_REST_Controller {
 			return new \WP_REST_Response( [ 'error' => 'Form not found.' ], 404 );
 		}
 
-		// Dummy registrant data for the test submission.
-		$data = [
-			'first_name'       => 'TEST',
-			'last_name'        => '[SIMULATION]',
-			'email'            => 'simulation@example.com',
-			'phone'            => '0500000000',
-			'hebrew_name'      => 'בדיקה',
-			'tribe'            => 'yisrael',
-			'payment_type'     => 'Ragil',
-			'wants_membership' => true,
-			'seats_men'        => [],
-			'seats_women'      => [],
-			'sponsorship_ids'  => [],
-		];
+		// Use whatever real form data the admin submitted with the simulate
+		// request (name, seats incl. "same for all davenings", membership choice),
+		// falling back to dummy values for anything missing.
+		$data = BMM_Submission::build_simulation_data( $request->get_params() );
 
 		$pricing       = BMM_Pricing::calculate( $form, $data );
 		$submission_id = BMM_Submission::create_draft( $form_id, $data, $pricing );
+
+		// Mark it clearly as a test so it is never mistaken for a real
+		// registration: flag it and prefix the list-table name with "[TEST]".
+		update_post_meta( $submission_id, '_bmm_sub_is_simulation', 1 );
+		$post = get_post( $submission_id );
+		if ( $post ) {
+			wp_update_post( [ 'ID' => $submission_id, 'post_title' => '[TEST] ' . $post->post_title ] );
+		}
 
 		$status_before = get_post_status( $submission_id );
 
