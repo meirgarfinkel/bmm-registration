@@ -68,6 +68,20 @@ class BMM_REST_Submit extends \WP_REST_Controller {
 			return new \WP_Error( 'submission_failed', __( 'Could not save your registration. Please try again.', 'bmm-registration' ), [ 'status' => 500 ] );
 		}
 
+		// Zero-total order (e.g. membership paid externally via Horaat Keva with
+		// no extra seats): nothing to charge. Complete it now and tell the client
+		// to skip the Nedarim payment step.
+		if ( $pricing['total'] <= 0 ) {
+			BMM_Submission::complete_without_payment( $submission_id );
+
+			return new \WP_REST_Response( [
+				'submission_id' => $submission_id,
+				'total'         => 0,
+				'zero_total'    => true,
+				'itemized'      => $pricing,
+			], 200 );
+		}
+
 		// Build callback URL with token
 		$token        = get_post_meta( $submission_id, '_bmm_sub_callback_token', true );
 		$callback_url = add_query_arg( 'token', $token, rest_url( 'bmm/v1/nedarim-callback' ) );

@@ -160,6 +160,22 @@ final class PricingTest extends TestCase {
 		$this->assertSame( 0, $out['total'] );
 	}
 
+	public function test_horaat_keva_with_no_extra_seats_totals_zero(): void {
+		// The ₪0 order the admin needs to submit without payment: membership paid
+		// externally via Horaat Keva, and no seats beyond the included 1 + 1.
+		$form = $this->makeForm();
+		$out  = BMM_Pricing::calculate( $form, [
+			'has_horaat_keva' => true,
+			'seats_men'       => $this->seats( [] ),
+			'seats_women'     => $this->seats( [] ),
+		] );
+
+		$this->assertSame( 0, $out['total'] );
+		$this->assertSame( 0, $out['membership'] );
+		$this->assertSame( 0, $out['extra_men_seats'] );
+		$this->assertSame( 0, $out['extra_women_seats'] );
+	}
+
 	public function test_horaat_keva_bills_extra_seats_at_member_rate(): void {
 		$form = $this->makeForm();
 		$out  = BMM_Pricing::calculate( $form, [

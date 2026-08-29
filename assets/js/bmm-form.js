@@ -100,6 +100,7 @@
 		// skipped the submit and landed on an empty step 6 with no iframe.
 		nextBtn.hidden   = n >= state.totalSteps - 1;
 		submitBtn.hidden = n !== state.totalSteps - 1; // "Proceed to Payment" only on step 5
+		if ( ! submitBtn.hidden ) updateSubmitLabel();
 
 		// Refresh pricing whenever the user reaches step 3 or 5
 		if ( ( n === 3 || n === 5 ) && typeof window.bmmFetchPrice === 'function' ) {
@@ -279,7 +280,7 @@
 				const msg = json.message || json.data?.message || 'Submission failed.';
 				showError( msg );
 				submitBtn.disabled = false;
-				submitBtn.textContent = 'Proceed to Payment';
+				updateSubmitLabel();
 				submitting = false;
 				return;
 			}
@@ -289,16 +290,52 @@
 			state.submittedTotal = json.total;
 			state.nedarimData    = json;
 
-			// Move to step 6 and fire the Nedarim iframe
+			// Move to step 6 (renders the order summary).
 			showStep( 6 );
-			window.dispatchEvent( new CustomEvent( 'bmm:ready-for-payment', { detail: json } ) );
+
+			if ( json.zero_total || ( json.total || 0 ) <= 0 ) {
+				// Nothing to charge — complete without the Nedarim payment step.
+				showZeroTotalComplete();
+			} else {
+				// Fire the Nedarim iframe for a real payment.
+				window.dispatchEvent( new CustomEvent( 'bmm:ready-for-payment', { detail: json } ) );
+			}
 
 		} catch ( err ) {
 			showError( 'Network error. Please try again.' );
 			submitBtn.disabled = false;
-			submitBtn.textContent = 'Proceed to Payment';
+			updateSubmitLabel();
 			submitting = false;
 		}
+	}
+
+	// The step-5 forward button says "Proceed to Payment" normally, but a ₪0
+	// order (e.g. membership paid externally, no extra seats) has nothing to pay,
+	// so it reads "Complete Registration". Refreshed on step 5 and after each
+	// live price update (see bmm-pricing.js).
+	function updateSubmitLabel() {
+		if ( ! submitBtn || submitBtn.disabled ) return;
+		const total = ( window.bmmState && window.bmmState.lastPricing && window.bmmState.lastPricing.total ) || 0;
+		submitBtn.textContent = total <= 0
+			? ( cfg.i18n?.completeNoPayment || 'Complete Registration (no payment)' )
+			: ( cfg.i18n?.proceedToPayment  || 'Proceed to Payment' );
+	}
+	window.bmmUpdateSubmitLabel = updateSubmitLabel;
+
+	// A ₪0 order needs no payment: hide the iframe/status and reveal the success
+	// message directly, using the submission id as the confirmation reference.
+	function showZeroTotalComplete() {
+		const wrap   = document.getElementById( 'bmm-iframe-wrap' );
+		const status = document.getElementById( 'bmm-payment-status' );
+		const okEl   = document.getElementById( 'bmm-payment-success' );
+		if ( wrap )   wrap.hidden = true;
+		if ( status ) status.hidden = true;
+		if ( okEl ) {
+			okEl.hidden = false;
+			const conf = document.getElementById( 'bmm-confirmation-number' );
+			if ( conf ) conf.textContent = state.submissionId ? String( state.submissionId ) : '—';
+		}
+		try { sessionStorage.removeItem( 'bmmFormData_' + cfg.formId ); } catch ( e ) {}
 	}
 
 	// ── Utility ───────────────────────────────────────────────────────────────

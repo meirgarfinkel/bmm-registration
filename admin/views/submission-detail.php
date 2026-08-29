@@ -131,6 +131,9 @@ if ( ! empty( $meta['sponsorship_other'] ) ) {
 				<tr><th><?php esc_html_e( 'Transaction ID', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['nedarim_transaction_id'] ?: $meta['nedarim_keva_id'] ?: '—' ); ?></td></tr>
 				<tr><th><?php esc_html_e( 'Approval Number', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['nedarim_confirmation'] ?: '—' ); ?></td></tr>
 				<tr><th><?php esc_html_e( 'Card Last 4', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['nedarim_last_num'] ?: '—' ); ?></td></tr>
+				<?php if ( ! empty( $meta['zero_total'] ) ) : ?>
+				<tr><th><?php esc_html_e( 'Payment', 'bmm-registration' ); ?></th><td><?php esc_html_e( 'None — ₪0 order (membership paid externally, no extra seats)', 'bmm-registration' ); ?></td></tr>
+				<?php endif; ?>
 				<tr><th><?php esc_html_e( 'Completed At', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['payment_completed_at'] ?: '—' ); ?></td></tr>
 				<?php if ( ! empty( $meta['failed_attempts'] ) ) : ?>
 				<tr><th><?php esc_html_e( 'Failed Payment Attempts', 'bmm-registration' ); ?></th><td><?php echo esc_html( (string) (int) $meta['failed_attempts'] ); ?></td></tr>

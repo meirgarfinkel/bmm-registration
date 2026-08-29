@@ -178,6 +178,31 @@ class BMM_Submission {
 	}
 
 	/**
+	 * Complete a ₪0 order that requires no payment — e.g. membership paid
+	 * externally through a separate Horaat Keva, with no extra seats. There is
+	 * nothing to charge, so the submission is marked completed directly without
+	 * a Nedarim transaction. Marked with 'zero_total' so it is never treated as
+	 * an unverified (missing-payment) completion.
+	 */
+	public static function complete_without_payment( int $post_id ): void {
+		self::set_meta( $post_id, [
+			'payment_method'       => 'none',
+			'zero_total'           => 1,
+			'payment_completed_at' => current_time( 'c' ),
+		] );
+
+		delete_post_meta( $post_id, '_bmm_sub_payment_unverified' );
+		delete_post_meta( $post_id, '_bmm_sub_payment_unverified_reason' );
+
+		wp_update_post( [
+			'ID'          => $post_id,
+			'post_status' => 'completed',
+		] );
+
+		do_action( 'bmm_payment_completed', $post_id, [ 'zero_total' => true ] );
+	}
+
+	/**
 	 * Record a Nedarim callback that did NOT represent an approved payment
 	 * (declined card, error, or an ambiguous payload with no transaction id).
 	 * The submission is intentionally left in its current state — it must never
@@ -278,6 +303,7 @@ class BMM_Submission {
 			'price_membership', 'price_extra_men', 'price_extra_women', 'price_sponsorships', 'price_total',
 			'nedarim_transaction_id', 'nedarim_keva_id', 'nedarim_confirmation', 'nedarim_last_num',
 			'payment_completed_at', 'amount_mismatch', 'failed_attempts',
+			'zero_total', 'payment_method',
 		];
 
 		$result = [];

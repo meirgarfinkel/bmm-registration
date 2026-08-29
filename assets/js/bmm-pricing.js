@@ -131,6 +131,10 @@
 
 		// Update seat price note to reflect whichever mode is active
 		updateSeatPriceNote( data );
+
+		// Let the form flip the step-5 button between "Proceed to Payment" and
+		// "Complete Registration" for a ₪0 order.
+		if ( typeof window.bmmUpdateSubmitLabel === 'function' ) window.bmmUpdateSubmitLabel();
 	}
 
 	function show( id, visible ) {
