@@ -70,6 +70,33 @@ final class PricingTest extends TestCase {
 		$this->assertSame( 0, BMM_Pricing::seats_for_holiday( $this->seats( [ 'rh_day1' => 4 ] ), 'nope' ) );
 	}
 
+	public function test_sum_seat_totals_adds_peak_per_holiday_across_rows(): void {
+		$rows = [
+			[
+				'men'   => $this->seats( [ 'rh_day1' => 3, 'yk_day' => 2 ] ),
+				'women' => $this->seats( [ 'rh_night1' => 1, 'yk_night' => 1 ] ),
+			],
+			[
+				'men'   => $this->seats( [ 'rh_night2' => 2, 'yk_night' => 4 ] ),
+				'women' => $this->seats( [ 'rh_day2' => 2 ] ),
+			],
+		];
+
+		$out = BMM_Pricing::sum_seat_totals( $rows );
+
+		$this->assertSame( 5, $out['men_rh'] );   // 3 + 2
+		$this->assertSame( 3, $out['women_rh'] ); // 1 + 2
+		$this->assertSame( 6, $out['men_yk'] );   // 2 + 4
+		$this->assertSame( 1, $out['women_yk'] ); // 1 + 0
+	}
+
+	public function test_sum_seat_totals_empty_is_all_zero(): void {
+		$this->assertSame(
+			[ 'men_rh' => 0, 'women_rh' => 0, 'men_yk' => 0, 'women_yk' => 0 ],
+			BMM_Pricing::sum_seat_totals( [] )
+		);
+	}
+
 	public function test_holidays_partition_all_davenings_exactly(): void {
 		// Guard against drift: every davening belongs to exactly one holiday
 		// group, and the groups introduce no unknown keys.

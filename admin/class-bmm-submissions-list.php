@@ -7,6 +7,12 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
 
 class BMM_Submissions_List extends \WP_List_Table {
 
+	/** Seat subtotals across the full filtered set: men_rh/women_rh/men_yk/women_yk. */
+	public array $seat_totals = [ 'men_rh' => 0, 'women_rh' => 0, 'men_yk' => 0, 'women_yk' => 0 ];
+
+	/** Number of submissions matching the current filter (all pages). */
+	public int $total_matching = 0;
+
 	public function __construct() {
 		parent::__construct( [
 			'singular' => 'submission',
@@ -82,6 +88,30 @@ class BMM_Submissions_List extends \WP_List_Table {
 		] );
 
 		$this->_column_headers = [ $this->get_columns(), [], $this->get_sortable_columns() ];
+
+		// Seat subtotals across the whole filtered set (all pages, not just this
+		// page of 25), so the totals reflect real seat demand.
+		$this->compute_seat_totals( $args );
+	}
+
+	/** Sum the per-holiday seat columns over every submission matching the filter. */
+	private function compute_seat_totals( array $args ): void {
+		$args['posts_per_page'] = -1;
+		$args['paged']          = 1;
+		$args['fields']         = 'ids';
+		unset( $args['offset'] );
+
+		$ids  = get_posts( $args );
+		$rows = [];
+		foreach ( $ids as $id ) {
+			$rows[] = [
+				'men'   => $this->seats_meta( (int) $id, 'men' ),
+				'women' => $this->seats_meta( (int) $id, 'women' ),
+			];
+		}
+
+		$this->seat_totals    = BMM_Pricing::sum_seat_totals( $rows );
+		$this->total_matching = count( $ids );
 	}
 
 	public function column_default( $item, $column_name ): string {

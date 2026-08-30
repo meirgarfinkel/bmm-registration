@@ -172,6 +172,26 @@ class BMM_Pricing {
 		return $vals ? max( $vals ) : 0;
 	}
 
+	/**
+	 * Sum the per-holiday peak seats across many submissions — for the seat
+	 * subtotals on the admin Submissions list.
+	 *
+	 * @param array $rows Each row: [ 'men' => seatsArray, 'women' => seatsArray ].
+	 * @return array{ men_rh:int, women_rh:int, men_yk:int, women_yk:int }
+	 */
+	public static function sum_seat_totals( array $rows ): array {
+		$totals = [ 'men_rh' => 0, 'women_rh' => 0, 'men_yk' => 0, 'women_yk' => 0 ];
+		foreach ( $rows as $row ) {
+			$men   = (array) ( $row['men']   ?? [] );
+			$women = (array) ( $row['women'] ?? [] );
+			$totals['men_rh']   += self::seats_for_holiday( $men,   'rh' );
+			$totals['women_rh'] += self::seats_for_holiday( $women, 'rh' );
+			$totals['men_yk']   += self::seats_for_holiday( $men,   'yk' );
+			$totals['women_yk'] += self::seats_for_holiday( $women, 'yk' );
+		}
+		return $totals;
+	}
+
 	/** Normalize seats array to exactly 6 non-negative ints. */
 	public static function normalize_seats( array $raw ): array {
 		$seats = [];

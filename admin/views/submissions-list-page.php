@@ -99,6 +99,24 @@
 		</form>
 	</div>
 
+	<?php
+	// Seat subtotals across the whole filtered set (all pages).
+	$seat_totals = $list_table->seat_totals;
+	?>
+	<div class="bmm-seat-totals">
+		<span class="bmm-seat-totals__title"><?php
+			echo esc_html( sprintf(
+				/* translators: %d = number of submissions */
+				_n( 'Seat totals (%d submission)', 'Seat totals (%d submissions)', $list_table->total_matching, 'bmm-registration' ),
+				$list_table->total_matching
+			) );
+		?></span>
+		<span class="bmm-seat-totals__item"><?php esc_html_e( "Men's (RH)", 'bmm-registration' ); ?>: <strong><?php echo (int) $seat_totals['men_rh']; ?></strong></span>
+		<span class="bmm-seat-totals__item"><?php esc_html_e( "Women's (RH)", 'bmm-registration' ); ?>: <strong><?php echo (int) $seat_totals['women_rh']; ?></strong></span>
+		<span class="bmm-seat-totals__item"><?php esc_html_e( "Men's (YK)", 'bmm-registration' ); ?>: <strong><?php echo (int) $seat_totals['men_yk']; ?></strong></span>
+		<span class="bmm-seat-totals__item"><?php esc_html_e( "Women's (YK)", 'bmm-registration' ); ?>: <strong><?php echo (int) $seat_totals['women_yk']; ?></strong></span>
+	</div>
+
 	<form method="get">
 		<input type="hidden" name="page" value="bmm-submissions" />
 		<div class="bmm-submissions-scroll">

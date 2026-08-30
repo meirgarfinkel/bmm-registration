@@ -8,7 +8,7 @@ live WordPress install:
 | **PHP unit** | PHPUnit 11 | `tests/*.php` | Pure business logic — pricing, payment verification, the payment audit, bulk actions, CSV export, submission helpers |
 | **JS unit** | Node's built-in test runner + jsdom | `tests/js/*.test.js` | Front-end form logic — seat collection, the "same for all" mirror, the three-way seat-mode toggle, sponsorships |
 
-As of this writing: **71 PHP tests** (160 assertions) and **18 JS tests**.
+As of this writing: **73 PHP tests** (165 assertions) and **18 JS tests**.
 
 ## Running the tests
 
