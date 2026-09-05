@@ -2,11 +2,16 @@
 defined( 'ABSPATH' ) || exit;
 // Variables: $post (WP_Post), $meta (array), $form_config (BMM_Form_Config|null), $submission_id (int)
 
+$editing = ! empty( $_GET['edit'] );
+
 $davening_labels = BMM_Pricing::DAVENINGS;
 
-$children = is_array( $meta['children_hebrew_names'] ) ? $meta['children_hebrew_names'] : [];
+$children    = is_array( $meta['children_hebrew_names'] ) ? $meta['children_hebrew_names'] : [];
 $seats_men   = is_array( $meta['seats_men'] )   ? $meta['seats_men']   : [];
 $seats_women = is_array( $meta['seats_women'] ) ? $meta['seats_women'] : [];
+
+$view_url = admin_url( 'admin.php?page=bmm-submissions&submission_id=' . $submission_id );
+$edit_url = add_query_arg( 'edit', 1, $view_url );
 
 $selected_sponsorship_labels = [];
 if ( $form_config && is_array( $meta['sponsorships_selected'] ) ) {
@@ -29,6 +34,9 @@ if ( ! empty( $meta['sponsorship_other'] ) ) {
 	<h1>
 		<?php echo esc_html( $post->post_title ); ?>
 		<span class="bmm-status bmm-status--<?php echo esc_attr( $post->post_status ); ?>"><?php echo esc_html( ucfirst( $post->post_status ) ); ?></span>
+		<?php if ( ! $editing ) : ?>
+		<a href="<?php echo esc_url( $edit_url ); ?>" class="page-title-action"><?php esc_html_e( 'Edit', 'bmm-registration' ); ?></a>
+		<?php endif; ?>
 	</h1>
 
 	<a href="<?php echo esc_url( admin_url( 'admin.php?page=bmm-submissions' ) ); ?>">&larr; <?php esc_html_e( 'Back to Submissions', 'bmm-registration' ); ?></a>
@@ -41,8 +49,10 @@ if ( ! empty( $meta['sponsorship_other'] ) ) {
 	<div class="notice notice-warning"><p><?php esc_html_e( '⚠️ Amount mismatch: the callback amount differs from the stored total. Review manually.', 'bmm-registration' ); ?></p></div>
 	<?php endif; ?>
 
-	<!-- Edit form (its own <form>; the Payment status form below is a sibling,
-	     never nested, so both submit correctly). -->
+	<?php if ( $editing ) : ?>
+
+	<!-- EDIT MODE. This <form> is a sibling of the status form below (never
+	     nested), so both submit correctly. -->
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="bmm-edit-submission">
 		<?php wp_nonce_field( 'bmm_edit_submission', 'bmm_edit_nonce' ); ?>
 		<input type="hidden" name="action" value="bmm_update_submission">
@@ -135,10 +145,87 @@ if ( ! empty( $meta['sponsorship_other'] ) ) {
 
 		<p class="submit">
 			<?php submit_button( __( 'Save changes', 'bmm-registration' ), 'primary', 'bmm_save', false ); ?>
+			<a href="<?php echo esc_url( $view_url ); ?>" class="button" style="margin-left:6px;"><?php esc_html_e( 'Cancel', 'bmm-registration' ); ?></a>
 			<span class="description" style="margin-left:8px;"><?php esc_html_e( 'Seats & membership are re-priced on save; the recorded payment is not changed.', 'bmm-registration' ); ?></span>
 		</p>
 	</form>
 
+	<?php else : ?>
+
+	<!-- VIEW MODE (read-only). -->
+	<div class="bmm-detail-columns">
+
+		<div class="bmm-detail-section">
+			<h2><?php esc_html_e( 'Personal Information', 'bmm-registration' ); ?></h2>
+			<table class="widefat striped">
+				<tr><th><?php esc_html_e( 'Name', 'bmm-registration' ); ?></th><td><?php echo esc_html( trim( $meta['first_name'] . ' ' . $meta['last_name'] ) ); ?></td></tr>
+				<tr><th><?php esc_html_e( 'Email', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['email'] ); ?></td></tr>
+				<tr><th><?php esc_html_e( 'Phone', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['phone'] ); ?></td></tr>
+				<tr><th><?php esc_html_e( 'City / Address', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['city'] . ( $meta['address'] ? ', ' . $meta['address'] : '' ) ); ?></td></tr>
+				<?php if ( $meta['zeout'] ) : ?>
+				<tr><th><?php esc_html_e( 'Israeli ID (ת.ז.)', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['zeout'] ); ?></td></tr>
+				<?php endif; ?>
+			</table>
+		</div>
+
+		<div class="bmm-detail-section">
+			<h2><?php esc_html_e( 'Hebrew Names', 'bmm-registration' ); ?></h2>
+			<table class="widefat striped">
+				<tr><th><?php esc_html_e( 'Hebrew Name', 'bmm-registration' ); ?></th><td dir="rtl"><?php echo esc_html( $meta['hebrew_name'] ); ?></td></tr>
+				<tr><th><?php esc_html_e( 'Tribe', 'bmm-registration' ); ?></th><td><?php echo esc_html( ucfirst( $meta['tribe'] ) ); ?></td></tr>
+				<?php if ( $meta['wife_hebrew_name'] ) : ?>
+				<tr><th><?php esc_html_e( "Wife's Hebrew Name", 'bmm-registration' ); ?></th><td dir="rtl"><?php echo esc_html( $meta['wife_hebrew_name'] ); ?></td></tr>
+				<?php endif; ?>
+				<?php if ( $children ) : ?>
+				<tr><th><?php esc_html_e( "Children's Hebrew Names", 'bmm-registration' ); ?></th><td dir="rtl"><?php echo esc_html( implode( ', ', $children ) ); ?></td></tr>
+				<?php endif; ?>
+			</table>
+		</div>
+
+		<div class="bmm-detail-section">
+			<h2><?php esc_html_e( 'Membership & Seats', 'bmm-registration' ); ?></h2>
+			<table class="widefat striped">
+				<tr><th><?php esc_html_e( 'Membership', 'bmm-registration' ); ?></th><td><?php echo $meta['wants_membership'] ? esc_html__( 'Yes', 'bmm-registration' ) : esc_html__( 'No', 'bmm-registration' ); ?></td></tr>
+				<tr><th><?php esc_html_e( 'Horaat Keva (separate)', 'bmm-registration' ); ?></th><td><?php echo ! empty( $meta['has_horaat_keva'] ) ? esc_html__( 'Yes', 'bmm-registration' ) : esc_html__( 'No', 'bmm-registration' ); ?></td></tr>
+			</table>
+			<table class="widefat striped" style="margin-top:8px;">
+				<thead><tr><th><?php esc_html_e( 'Davening', 'bmm-registration' ); ?></th><th><?php esc_html_e( 'Men', 'bmm-registration' ); ?></th><th><?php esc_html_e( 'Women', 'bmm-registration' ); ?></th></tr></thead>
+				<tbody>
+				<?php foreach ( $davening_labels as $key => $label ) : ?>
+				<tr>
+					<td><?php echo esc_html( $label ); ?></td>
+					<td><?php echo esc_html( (int) ( $seats_men[ $key ] ?? 0 ) ); ?></td>
+					<td><?php echo esc_html( (int) ( $seats_women[ $key ] ?? 0 ) ); ?></td>
+				</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="bmm-detail-section">
+			<h2><?php esc_html_e( 'Sponsorships & Notes', 'bmm-registration' ); ?></h2>
+			<table class="widefat striped">
+				<tr>
+					<th><?php esc_html_e( 'Sponsorships', 'bmm-registration' ); ?></th>
+					<td><?php echo $selected_sponsorship_labels ? esc_html( implode( ', ', $selected_sponsorship_labels ) ) : esc_html__( 'None', 'bmm-registration' ); ?></td>
+				</tr>
+				<?php if ( ! empty( $meta['kiddush_date'] ) ) : ?>
+				<tr><th><?php esc_html_e( 'Kiddush Date', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['kiddush_date'] ); ?></td></tr>
+				<?php endif; ?>
+				<?php if ( ! empty( $meta['kiddush_dedication'] ) ) : ?>
+				<tr><th><?php esc_html_e( 'Kiddush Dedication', 'bmm-registration' ); ?></th><td><?php echo esc_html( $meta['kiddush_dedication'] ); ?></td></tr>
+				<?php endif; ?>
+				<?php if ( $meta['notes'] ) : ?>
+				<tr><th><?php esc_html_e( 'Notes', 'bmm-registration' ); ?></th><td><?php echo nl2br( esc_html( $meta['notes'] ) ); ?></td></tr>
+				<?php endif; ?>
+			</table>
+		</div>
+
+	</div>
+
+	<?php endif; ?>
+
+	<!-- PAYMENT (read-only in both modes; its status form is a top-level sibling). -->
 	<div class="bmm-detail-columns">
 		<div class="bmm-detail-section">
 			<h2><?php esc_html_e( 'Payment', 'bmm-registration' ); ?></h2>
