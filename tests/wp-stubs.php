@@ -64,3 +64,83 @@ if ( ! function_exists( 'sanitize_key' ) ) {
 		return preg_replace( '/[^a-z0-9_\-]/', '', $key );
 	}
 }
+
+// ── Post-meta store (for the submission-edit / re-pricing round trip) ──────────
+
+$GLOBALS['__wp_meta'] = [];
+
+/** Reset the in-memory meta store between tests. */
+function __wp_reset_meta(): void {
+	$GLOBALS['__wp_meta'] = [];
+}
+
+if ( ! function_exists( 'update_post_meta' ) ) {
+	function update_post_meta( $id, $key, $value ) {
+		// Mirror WordPress: update_metadata() unslashes the stored value, which is
+		// exactly what encode_json()'s wp_slash() is designed to survive.
+		$GLOBALS['__wp_meta'][ (int) $id ][ $key ] = is_string( $value ) ? stripslashes( $value ) : $value;
+		return true;
+	}
+}
+
+if ( ! function_exists( 'get_post_meta' ) ) {
+	function get_post_meta( $id, $key = '', $single = true ) {
+		return $GLOBALS['__wp_meta'][ (int) $id ][ $key ] ?? '';
+	}
+}
+
+if ( ! function_exists( 'delete_post_meta' ) ) {
+	function delete_post_meta( $id, $key ) {
+		unset( $GLOBALS['__wp_meta'][ (int) $id ][ $key ] );
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_slash' ) ) {
+	function wp_slash( $value ) {
+		return is_string( $value ) ? addslashes( $value ) : $value;
+	}
+}
+
+if ( ! function_exists( 'wp_unslash' ) ) {
+	function wp_unslash( $value ) {
+		if ( is_array( $value ) ) {
+			return array_map( 'wp_unslash', $value );
+		}
+		return is_string( $value ) ? stripslashes( $value ) : $value;
+	}
+}
+
+if ( ! function_exists( 'wp_json_encode' ) ) {
+	function wp_json_encode( $value, $flags = 0 ) {
+		return json_encode( $value, $flags );
+	}
+}
+
+if ( ! function_exists( 'sanitize_text_field' ) ) {
+	function sanitize_text_field( $value ) {
+		return trim( preg_replace( '/[\r\n\t ]+/', ' ', (string) $value ) );
+	}
+}
+
+if ( ! function_exists( 'sanitize_textarea_field' ) ) {
+	function sanitize_textarea_field( $value ) {
+		return trim( (string) $value );
+	}
+}
+
+if ( ! function_exists( 'sanitize_email' ) ) {
+	function sanitize_email( $value ) {
+		return trim( (string) $value );
+	}
+}
+
+if ( ! function_exists( 'current_time' ) ) {
+	function current_time( $type ) {
+		return '2026-01-01T00:00:00+00:00';
+	}
+}
+
+if ( ! function_exists( 'do_action' ) ) {
+	function do_action( ...$args ) {}
+}

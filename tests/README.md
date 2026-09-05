@@ -8,7 +8,7 @@ live WordPress install:
 | **PHP unit** | PHPUnit 11 | `tests/*.php` | Pure business logic — pricing, payment verification, the payment audit, bulk actions, CSV export, submission helpers |
 | **JS unit** | Node's built-in test runner + jsdom | `tests/js/*.test.js` | Front-end form logic — seat collection, the "same for all" mirror, the three-way seat-mode toggle, sponsorships |
 
-As of this writing: **73 PHP tests** (165 assertions) and **18 JS tests**.
+As of this writing: **77 PHP tests** (175 assertions) and **18 JS tests**.
 
 ## Running the tests
 
@@ -43,11 +43,13 @@ That lets the tests load the class files directly and exercise their pure logic.
   `tests/wp-stubs.php`, and `require_once`s the classes under test
   (`BMM_Form_Config`, `BMM_Pricing`, `BMM_Submission`, `BMM_Callback_Handler`,
   `BMM_CSV_Export`, `BMM_Admin`).
-- **`tests/wp-stubs.php`** provides a tiny **in-memory post store** and shims for
-  the few WordPress functions the admin mutation code calls (`get_post`,
-  `wp_update_post`, `wp_trash_post`, `sanitize_key`). Each shim is guarded with
+- **`tests/wp-stubs.php`** provides tiny **in-memory post and post-meta stores**
+  plus shims for the WordPress functions the admin/mutation code calls
+  (`get_post`, `wp_update_post`, `wp_trash_post`, `get_post_meta`,
+  `update_post_meta`, `delete_post_meta`, the `sanitize_*` family, `wp_slash`/
+  `wp_unslash`, `wp_json_encode`, …). Each shim is guarded with
   `function_exists()` so a real WordPress environment always wins. Helpers:
-  - `__wp_reset_posts()` — clear the store (call in `setUp()`).
+  - `__wp_reset_posts()` / `__wp_reset_meta()` — clear the stores (call in `setUp()`).
   - `__wp_seed_post( $id, $type, $status )` — seed a fake post.
   - `__wp_status( $id )` — read a post's current status for assertions.
 
@@ -84,6 +86,10 @@ plain values, and the thin WordPress wrapper delegates to it. Examples:
   right columns, Yes/No flags render.
 - **`SimulationDataTest.php`** — `build_simulation_data()`: the admin payment
   simulation carries the real name + seats, with dummy fallbacks for blanks.
+- **`SubmissionEditTest.php`** — the admin edit round-trip: `update_fields()`
+  persists edited name/seats/membership and `recalculate_pricing()` re-derives
+  the price breakdown (incl. re-pricing an edit down to a ₪0 order), against the
+  in-memory post-meta store.
 - **`SanitizeDateTest.php`** — `BMM_Submission::sanitize_date()` accepts only
   valid `Y-m-d` dates (data-provider driven).
 

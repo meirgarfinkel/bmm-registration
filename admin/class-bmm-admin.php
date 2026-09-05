@@ -8,6 +8,7 @@ class BMM_Admin {
 		add_action( 'admin_enqueue_scripts', [ self::class, 'enqueue_assets' ] );
 		add_action( 'admin_post_bmm_export_csv', [ 'BMM_CSV_Export', 'handle_export_request' ] );
 		add_action( 'admin_post_bmm_update_submission_status', [ self::class, 'handle_status_update' ] );
+		add_action( 'admin_post_bmm_update_submission', [ self::class, 'handle_submission_update' ] );
 		add_action( 'admin_post_bmm_audit_payments', [ self::class, 'handle_payment_audit' ] );
 		add_action( 'admin_post_bmm_revert_unverified', [ self::class, 'handle_revert_unverified' ] );
 	}
@@ -198,6 +199,68 @@ class BMM_Admin {
 		}
 
 		wp_safe_redirect( admin_url( 'admin.php?page=bmm-submissions&submission_id=' . $submission_id ) );
+		exit;
+	}
+
+	/**
+	 * Save an admin edit of a submission's registrant data (name, contact,
+	 * Hebrew names, membership options, per-davening seats, notes). Recomputes
+	 * the price breakdown from the edited seats/membership so the record stays
+	 * consistent; payment/transaction fields are left untouched.
+	 */
+	public static function handle_submission_update(): void {
+		if (
+			! isset( $_POST['bmm_edit_nonce'] ) ||
+			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['bmm_edit_nonce'] ) ), 'bmm_edit_submission' ) ||
+			! current_user_can( 'manage_options' )
+		) {
+			wp_die( esc_html__( 'Unauthorized', 'bmm-registration' ) );
+		}
+
+		$submission_id = (int) ( $_POST['submission_id'] ?? 0 );
+		$post          = $submission_id ? get_post( $submission_id ) : null;
+		if ( ! $post || $post->post_type !== 'bmm_submission' ) {
+			wp_die( esc_html__( 'Submission not found.', 'bmm-registration' ) );
+		}
+
+		$raw = wp_unslash( $_POST );
+
+		// Children names arrive as a newline-separated textarea.
+		$children = array_filter( array_map( 'trim', preg_split( '/\r\n|\r|\n/', (string) ( $raw['children_hebrew_names'] ?? '' ) ) ) );
+
+		BMM_Submission::update_fields( $submission_id, [
+			'first_name'        => $raw['first_name']       ?? '',
+			'last_name'         => $raw['last_name']        ?? '',
+			'email'             => $raw['email']            ?? '',
+			'phone'             => $raw['phone']            ?? '',
+			'city'              => $raw['city']             ?? '',
+			'address'           => $raw['address']          ?? '',
+			'zeout'             => $raw['zeout']            ?? '',
+			'hebrew_name'       => $raw['hebrew_name']      ?? '',
+			'tribe'             => $raw['tribe']            ?? 'yisrael',
+			'wife_hebrew_name'  => $raw['wife_hebrew_name'] ?? '',
+			'children_hebrew_names' => array_values( $children ),
+			'wants_membership'  => ! empty( $raw['wants_membership'] ),
+			'has_horaat_keva'   => ! empty( $raw['has_horaat_keva'] ),
+			'wants_guest_seats' => ! empty( $raw['wants_guest_seats'] ),
+			'seats_men'         => (array) ( $raw['seats_men'] ?? [] ),
+			'seats_women'       => (array) ( $raw['seats_women'] ?? [] ),
+			'notes'             => $raw['notes'] ?? '',
+		] );
+
+		// Keep the price breakdown consistent with the edited seats/membership.
+		if ( $post->post_parent ) {
+			try {
+				BMM_Submission::recalculate_pricing( $submission_id, new BMM_Form_Config( $post->post_parent ) );
+			} catch ( \Exception $e ) {
+				// Form deleted — leave the stored pricing as-is.
+			}
+		}
+
+		wp_safe_redirect( add_query_arg(
+			[ 'page' => 'bmm-submissions', 'submission_id' => $submission_id, 'bmm_saved' => 1 ],
+			admin_url( 'admin.php' )
+		) );
 		exit;
 	}
 

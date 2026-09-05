@@ -98,6 +98,82 @@ class BMM_Submission {
 	}
 
 	/**
+	 * Update an existing submission's registrant data from an admin edit
+	 * (personal info, Hebrew names, membership options, per-davening seats,
+	 * notes). Payment/transaction fields are intentionally left untouched.
+	 * Mirrors the sanitisation used at creation time.
+	 */
+	public static function update_fields( int $post_id, array $data ): void {
+		$first = sanitize_text_field( $data['first_name'] ?? '' );
+		$last  = sanitize_text_field( $data['last_name'] ?? '' );
+
+		$children = array_values( array_filter( array_map(
+			'sanitize_text_field',
+			(array) ( $data['children_hebrew_names'] ?? [] )
+		) ) );
+
+		$seats_men   = BMM_Pricing::normalize_seats( (array) ( $data['seats_men'] ?? [] ) );
+		$seats_women = BMM_Pricing::normalize_seats( (array) ( $data['seats_women'] ?? [] ) );
+
+		self::set_meta( $post_id, [
+			'first_name'            => $first,
+			'last_name'             => $last,
+			'email'                 => sanitize_email( $data['email'] ?? '' ),
+			'phone'                 => preg_replace( '/\D/', '', $data['phone'] ?? '' ),
+			'city'                  => sanitize_text_field( $data['city'] ?? '' ),
+			'address'               => sanitize_text_field( $data['address'] ?? '' ),
+			'zeout'                 => sanitize_text_field( $data['zeout'] ?? '' ),
+			'hebrew_name'           => sanitize_text_field( $data['hebrew_name'] ?? '' ),
+			'tribe'                 => in_array( $data['tribe'] ?? '', [ 'kohen', 'levi', 'yisrael' ], true ) ? $data['tribe'] : 'yisrael',
+			'wife_hebrew_name'      => sanitize_text_field( $data['wife_hebrew_name'] ?? '' ),
+			'children_hebrew_names' => self::encode_json( $children ),
+			'wants_membership'      => ! empty( $data['wants_membership'] )  ? 1 : 0,
+			'has_horaat_keva'       => ! empty( $data['has_horaat_keva'] )   ? 1 : 0,
+			'wants_guest_seats'     => ! empty( $data['wants_guest_seats'] ) ? 1 : 0,
+			'seats_men'             => self::encode_json( $seats_men ),
+			'seats_women'           => self::encode_json( $seats_women ),
+			'notes'                 => sanitize_textarea_field( $data['notes'] ?? '' ),
+		] );
+
+		wp_update_post( [
+			'ID'         => $post_id,
+			'post_title' => trim( "$first $last" ) ?: __( 'Registration', 'bmm-registration' ),
+		] );
+	}
+
+	/**
+	 * Recompute and store a submission's price breakdown from its currently
+	 * stored data — used after an admin edits seats/membership so the Payment
+	 * section stays consistent with the registration. Returns the breakdown.
+	 * The Nedarim transaction fields are not touched.
+	 */
+	public static function recalculate_pricing( int $post_id, BMM_Form_Config $form ): array {
+		$m = self::get_meta( $post_id );
+
+		$pricing = BMM_Pricing::calculate( $form, [
+			'wants_membership'  => ! empty( $m['wants_membership'] ),
+			'has_horaat_keva'   => ! empty( $m['has_horaat_keva'] ),
+			'wants_guest_seats' => ! empty( $m['wants_guest_seats'] ),
+			'seats_men'         => (array) $m['seats_men'],
+			'seats_women'       => (array) $m['seats_women'],
+			'sponsorship_ids'   => (array) $m['sponsorships_selected'],
+			'sponsorship_other' => (int) $m['sponsorship_other'],
+		] );
+
+		self::set_meta( $post_id, [
+			'price_membership'   => $pricing['membership'],
+			'price_extra_men'    => $pricing['extra_men_seats'],
+			'price_extra_women'  => $pricing['extra_women_seats'],
+			'price_guest_men'    => $pricing['guest_men_seats'],
+			'price_guest_women'  => $pricing['guest_women_seats'],
+			'price_sponsorships' => $pricing['sponsorships_total'],
+			'price_total'        => $pricing['total'],
+		] );
+
+		return $pricing;
+	}
+
+	/**
 	 * Build the submission-input array for the admin "Simulate Nedarim callback"
 	 * diagnostic. Uses whatever real form data the admin entered (so the test
 	 * record reflects their name and seats — including "same for all davenings"),
