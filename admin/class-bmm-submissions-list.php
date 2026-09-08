@@ -39,11 +39,25 @@ class BMM_Submissions_List extends \WP_List_Table {
 	}
 
 	public function get_sortable_columns(): array {
+		// The slug (first element) is what we interpret in prepare_items().
 		return [
-			'name' => [ 'title', false ],
-			'date' => [ 'date', true ],
+			'name'     => [ 'name', false ],
+			'men_rh'   => [ 'men_rh', false ],
+			'women_rh' => [ 'women_rh', false ],
+			'men_yk'   => [ 'men_yk', false ],
+			'women_yk' => [ 'women_yk', false ],
+			'total'    => [ 'total', false ],
+			'date'     => [ 'date', true ], // default sort
 		];
 	}
+
+	/** Sortable seat columns → [ gender, holiday ] for the computed sort key. */
+	private const SEAT_SORT = [
+		'men_rh'   => [ 'men', 'rh' ],
+		'women_rh' => [ 'women', 'rh' ],
+		'men_yk'   => [ 'men', 'yk' ],
+		'women_yk' => [ 'women', 'yk' ],
+	];
 
 	protected function get_bulk_actions(): array {
 		return [
@@ -60,38 +74,80 @@ class BMM_Submissions_List extends \WP_List_Table {
 		$status_filter = isset( $_GET['payment_status'] ) ? sanitize_key( $_GET['payment_status'] ) : '';
 		$form_filter   = isset( $_GET['form_id'] ) ? (int) $_GET['form_id'] : 0;
 
-		// Resolve the status filter (defaults to "completed", supports the
-		// "all" and audit-only "unverified" pseudo-statuses). See
-		// BMM_Submission::resolve_list_status().
-		$args = array_merge(
-			[
-				'post_type'      => 'bmm_submission',
-				'posts_per_page' => $per_page,
-				'paged'          => $current_page,
-				'orderby'        => 'date',
-				'order'          => 'DESC',
-			],
+		$orderby = isset( $_GET['orderby'] ) ? sanitize_key( $_GET['orderby'] ) : 'date';
+		$order   = ( isset( $_GET['order'] ) && strtolower( (string) $_GET['order'] ) === 'asc' ) ? 'ASC' : 'DESC';
+
+		// Base filter args (status defaults to "completed"; supports "all" and the
+		// audit-only "unverified"). See BMM_Submission::resolve_list_status().
+		$base = array_merge(
+			[ 'post_type' => 'bmm_submission' ],
 			BMM_Submission::resolve_list_status( $status_filter )
 		);
-
 		if ( $form_filter ) {
-			$args['post_parent'] = $form_filter;
+			$base['post_parent'] = $form_filter;
 		}
 
-		$query      = new \WP_Query( $args );
-		$this->items = $query->posts;
+		if ( isset( self::SEAT_SORT[ $orderby ] ) ) {
+			// Seat columns are computed (peak seats per holiday, from JSON meta),
+			// so they can't be sorted in SQL — sort the whole filtered set in PHP,
+			// then paginate.
+			[ $gender, $holiday ] = self::SEAT_SORT[ $orderby ];
+			$ids = get_posts( array_merge( $base, [ 'posts_per_page' => -1, 'fields' => 'ids' ] ) );
 
-		$this->set_pagination_args( [
-			'total_items' => $query->found_posts,
-			'per_page'    => $per_page,
-			'total_pages' => $query->max_num_pages,
-		] );
+			$keyed = [];
+			foreach ( $ids as $id ) {
+				$keyed[] = [ 'id' => (int) $id, 'k' => BMM_Pricing::seats_for_holiday( $this->seats_meta( (int) $id, $gender ), $holiday ) ];
+			}
+			usort( $keyed, static function ( $a, $b ) use ( $order ) {
+				$cmp = $a['k'] <=> $b['k'];
+				return $order === 'ASC' ? $cmp : -$cmp;
+			} );
+
+			$total_items = count( $keyed );
+			$page_ids    = array_map(
+				static fn( $r ) => $r['id'],
+				array_slice( $keyed, ( $current_page - 1 ) * $per_page, $per_page )
+			);
+
+			$this->items = $page_ids
+				? get_posts( array_merge( $base, [ 'post__in' => $page_ids, 'orderby' => 'post__in', 'posts_per_page' => count( $page_ids ) ] ) )
+				: [];
+
+			$this->set_pagination_args( [
+				'total_items' => $total_items,
+				'per_page'    => $per_page,
+				'total_pages' => (int) ceil( $total_items / $per_page ),
+			] );
+		} else {
+			$args = array_merge( $base, [
+				'posts_per_page' => $per_page,
+				'paged'          => $current_page,
+				'order'          => $order,
+			] );
+			if ( $orderby === 'total' ) {
+				$args['meta_key'] = '_bmm_sub_price_total';
+				$args['orderby']  = 'meta_value_num';
+			} elseif ( $orderby === 'name' ) {
+				$args['orderby'] = 'title';
+			} else {
+				$args['orderby'] = 'date';
+			}
+
+			$query       = new \WP_Query( $args );
+			$this->items = $query->posts;
+
+			$this->set_pagination_args( [
+				'total_items' => $query->found_posts,
+				'per_page'    => $per_page,
+				'total_pages' => $query->max_num_pages,
+			] );
+		}
 
 		$this->_column_headers = [ $this->get_columns(), [], $this->get_sortable_columns() ];
 
 		// Seat subtotals across the whole filtered set (all pages, not just this
 		// page of 25), so the totals reflect real seat demand.
-		$this->compute_seat_totals( $args );
+		$this->compute_seat_totals( $base );
 	}
 
 	/** Sum the per-holiday seat columns over every submission matching the filter. */
