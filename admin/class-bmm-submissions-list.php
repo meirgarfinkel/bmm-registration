@@ -196,6 +196,9 @@ class BMM_Submissions_List extends \WP_List_Table {
 			if ( $reason === 'duplicate' ) {
 				$label = __( '⚠ Duplicate', 'bmm-registration' );
 				$title = __( 'Duplicate of another completed submission from the same registrant — only one payment was made.', 'bmm-registration' );
+			} elseif ( $reason === 'zero_no_payment' ) {
+				$label = __( '⚠ ₪0 — no payment', 'bmm-registration' );
+				$title = __( 'Completed for ₪0 without Horaat Keva — the payment step was skipped and no money was collected. Edit to add the correct option and re-price, then collect payment.', 'bmm-registration' );
 			} else {
 				$label = __( '⚠ Unverified', 'bmm-registration' );
 				$title = __( 'Marked completed but no successful Nedarim payment was recorded — review this payment.', 'bmm-registration' );

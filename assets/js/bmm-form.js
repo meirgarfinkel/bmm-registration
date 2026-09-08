@@ -293,8 +293,10 @@
 			// Move to step 6 (renders the order summary).
 			showStep( 6 );
 
-			if ( json.zero_total || ( json.total || 0 ) <= 0 ) {
-				// Nothing to charge — complete without the Nedarim payment step.
+			if ( json.zero_total === true ) {
+				// The SERVER explicitly confirmed a legitimate ₪0 order (Horaat
+				// Keva, no extra seats). Only then skip payment. Never infer this
+				// from total alone — a paid order must always reach the iframe.
 				showZeroTotalComplete();
 			} else {
 				// Fire the Nedarim iframe for a real payment.

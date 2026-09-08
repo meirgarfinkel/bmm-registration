@@ -297,20 +297,27 @@ class BMM_Admin {
 			$id      = (int) $id;
 			$post    = get_post( $id );
 			$records[ $id ] = [
-				'id'    => $id,
-				'form'  => $post ? (int) $post->post_parent : 0,
-				'total' => (int) get_post_meta( $id, '_bmm_sub_price_total', true ),
-				'paid'  => self::record_looks_paid( $id ),
-				'email' => strtolower( trim( (string) get_post_meta( $id, '_bmm_sub_email', true ) ) ),
-				'phone' => preg_replace( '/\D/', '', (string) get_post_meta( $id, '_bmm_sub_phone', true ) ),
+				'id'          => $id,
+				'form'        => $post ? (int) $post->post_parent : 0,
+				'total'       => (int) get_post_meta( $id, '_bmm_sub_price_total', true ),
+				'paid'        => self::record_looks_paid( $id ),
+				'horaat_keva' => ! empty( get_post_meta( $id, '_bmm_sub_has_horaat_keva', true ) ),
+				'email'       => strtolower( trim( (string) get_post_meta( $id, '_bmm_sub_email', true ) ) ),
+				'phone'       => preg_replace( '/\D/', '', (string) get_post_meta( $id, '_bmm_sub_phone', true ) ),
 			];
 		}
 
-		// Reason per record. Signal 1: owes money but doesn't look paid.
+		// Reason per record.
 		$reasons = [];
 		foreach ( $records as $id => $r ) {
 			if ( $r['total'] > 0 && ! $r['paid'] ) {
+				// Signal 1: owes money but doesn't look paid.
 				$reasons[ $id ] = 'no_payment';
+			} elseif ( $r['total'] <= 0 && ! $r['horaat_keva'] ) {
+				// Signal 1b: completed for ₪0 but NOT a legitimate Horaat-Keva
+				// free order — the payment step was skipped in error and no
+				// money was collected. (Legit free = Horaat Keva, which is fine.)
+				$reasons[ $id ] = 'zero_no_payment';
 			}
 		}
 

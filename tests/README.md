@@ -8,7 +8,7 @@ live WordPress install:
 | **PHP unit** | PHPUnit 11 | `tests/*.php` | Pure business logic — pricing, payment verification, the payment audit, bulk actions, CSV export, submission helpers |
 | **JS unit** | Node's built-in test runner + jsdom | `tests/js/*.test.js` | Front-end form logic — seat collection, the "same for all" mirror, the three-way seat-mode toggle, sponsorships |
 
-As of this writing: **77 PHP tests** (175 assertions) and **18 JS tests**.
+As of this writing: **85 PHP tests** (187 assertions) and **18 JS tests**.
 
 ## Running the tests
 
@@ -90,6 +90,10 @@ plain values, and the thin WordPress wrapper delegates to it. Examples:
   persists edited name/seats/membership and `recalculate_pricing()` re-derives
   the price breakdown (incl. re-pricing an edit down to a ₪0 order), against the
   in-memory post-meta store.
+- **`CheckoutModeTest.php`** — the money-critical rule (`checkout_mode()` + real
+  pricing): a paid order must reach the payment screen; an order that comes to ₪0
+  for the wrong reason (seats entered without a paid option) is `invalid`, never
+  free; only a Horaat-Keva order with no extra seats is `free`.
 - **`SanitizeDateTest.php`** — `BMM_Submission::sanitize_date()` accepts only
   valid `Y-m-d` dates (data-provider driven).
 

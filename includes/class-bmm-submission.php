@@ -254,6 +254,29 @@ class BMM_Submission {
 	}
 
 	/**
+	 * Decide how a submission checks out, from its data and computed total.
+	 * Pure (no I/O) so the money-critical rule is unit-testable.
+	 *
+	 *   'charge'  — total > 0: the registrant MUST pay via Nedarim.
+	 *   'free'    — total is 0 AND it is an explicit Horaat-Keva order
+	 *               (membership paid externally, no extra seats): complete
+	 *               without payment.
+	 *   'invalid' — total is 0 for any other reason (e.g. seats entered without
+	 *               choosing Membership/Guest, or an empty order). This must
+	 *               NEVER complete for free — it is rejected so the registrant
+	 *               picks a paid option.
+	 */
+	public static function checkout_mode( array $data, int $total ): string {
+		if ( $total > 0 ) {
+			return 'charge';
+		}
+		if ( ! empty( $data['has_horaat_keva'] ) ) {
+			return 'free';
+		}
+		return 'invalid';
+	}
+
+	/**
 	 * Complete a ₪0 order that requires no payment — e.g. membership paid
 	 * externally through a separate Horaat Keva, with no extra seats. There is
 	 * nothing to charge, so the submission is marked completed directly without

@@ -61,6 +61,20 @@ class BMM_REST_Submit extends \WP_REST_Controller {
 			], 200 );
 		}
 
+		// Decide how this order checks out BEFORE creating a record. A ₪0 total
+		// is only allowed as an explicit Horaat-Keva (paid-externally) order;
+		// anything else that comes to ₪0 (e.g. seats entered without choosing
+		// Membership or Guest Seats) is rejected so it can NEVER complete for
+		// free without payment.
+		$mode = BMM_Submission::checkout_mode( $data, (int) $pricing['total'] );
+		if ( $mode === 'invalid' ) {
+			return new \WP_Error(
+				'nothing_to_pay',
+				__( 'This registration has nothing to pay. Please choose Membership or Guest Seats — or, if you already pay membership through a separate Horaat Keva, tick that option.', 'bmm-registration' ),
+				[ 'status' => 422 ]
+			);
+		}
+
 		// Create submission
 		try {
 			$submission_id = BMM_Submission::create_draft( $form_id, $data, $pricing );
@@ -68,10 +82,9 @@ class BMM_REST_Submit extends \WP_REST_Controller {
 			return new \WP_Error( 'submission_failed', __( 'Could not save your registration. Please try again.', 'bmm-registration' ), [ 'status' => 500 ] );
 		}
 
-		// Zero-total order (e.g. membership paid externally via Horaat Keva with
-		// no extra seats): nothing to charge. Complete it now and tell the client
-		// to skip the Nedarim payment step.
-		if ( $pricing['total'] <= 0 ) {
+		// Legitimate ₪0 order (Horaat Keva, no extra seats): complete it now and
+		// tell the client to skip the Nedarim payment step.
+		if ( $mode === 'free' ) {
 			BMM_Submission::complete_without_payment( $submission_id );
 
 			return new \WP_REST_Response( [
