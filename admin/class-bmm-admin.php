@@ -49,7 +49,21 @@ class BMM_Admin {
 			add_action( "load-{$submissions_hook}", [ self::class, 'process_submissions_bulk_action' ] );
 		}
 
+		add_submenu_page(
+			'bmm-registration',
+			__( 'Payment Callbacks', 'bmm-registration' ),
+			__( 'Payment Callbacks', 'bmm-registration' ),
+			'manage_options',
+			'bmm-callback-log',
+			[ self::class, 'render_callback_log_page' ]
+		);
+
 		BMM_Settings::register_settings_page();
+	}
+
+	public static function render_callback_log_page(): void {
+		$entries = BMM_Callback_Log::all();
+		require BMM_REG_DIR . 'admin/views/callback-log-page.php';
 	}
 
 	/**

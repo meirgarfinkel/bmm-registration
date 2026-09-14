@@ -6,64 +6,85 @@ class BMM_Callback_Handler {
 	private const NEDARIM_IP = '18.194.219.73';
 
 	public function handle( \WP_REST_Request $request ): \WP_REST_Response {
-		// 1. IP verification
-		if ( ! $this->verify_ip() ) {
-			return new \WP_REST_Response( [ 'error' => 'Forbidden' ], 403 );
-		}
+		$remote_ip = $this->get_request_ip();
+		$ip_ok     = $this->verify_ip();
 
-		// 2. Parse JSON body
+		// Parse the body up front so every attempt — even a rejected one — can be
+		// logged with the submission it referenced. Nedarim retries a callback
+		// zero times, so a rejected/lost one silently strands a paid submission;
+		// the log is how we find those.
 		$payload = json_decode( $request->get_body(), true );
 		if ( ! is_array( $payload ) ) {
-			return new \WP_REST_Response( [ 'error' => 'Invalid payload' ], 400 );
+			$payload = [];
 		}
-
-		// 3. Token verification
 		$token         = sanitize_text_field( $request->get_param( 'token' ) ?? '' );
 		$submission_id = (int) ( $payload['Param1'] ?? 0 );
 
+		$log = [
+			'ip'            => $remote_ip,
+			'ip_ok'         => $ip_ok ? 1 : 0,
+			'submission_id' => $submission_id,
+			'amount'        => isset( $payload['Amount'] ) ? (string) $payload['Amount'] : '',
+			'txn'           => isset( $payload['TransactionId'] ) ? (string) $payload['TransactionId'] : '',
+			'keva'          => isset( $payload['KevaId'] ) ? (string) $payload['KevaId'] : '',
+		];
+
+		$finish = static function ( string $outcome, int $status ) use ( &$log ): \WP_REST_Response {
+			$log['outcome'] = $outcome;
+			BMM_Callback_Log::record( $log );
+			return new \WP_REST_Response( [ 'received' => true, 'outcome' => $outcome ], $status );
+		};
+
+		// 1. IP verification.
+		if ( ! $ip_ok ) {
+			return $finish( 'forbidden_ip', 403 );
+		}
+
+		// 2. Body must be valid JSON.
+		if ( ! $payload ) {
+			return $finish( 'invalid_payload', 400 );
+		}
+
+		// 3. Token + submission id present.
 		if ( ! $submission_id || ! $token ) {
-			return new \WP_REST_Response( [ 'received' => true ], 200 );
+			return $finish( 'missing_id_or_token', 200 );
 		}
 
 		$stored_token = get_post_meta( $submission_id, '_bmm_sub_callback_token', true );
 		if ( ! hash_equals( (string) $stored_token, $token ) ) {
-			return new \WP_REST_Response( [ 'error' => 'Invalid token' ], 403 );
+			return $finish( 'invalid_token', 403 );
 		}
 
-		// 4. Validate submission post
+		// 4. Validate submission post.
 		$post = get_post( $submission_id );
 		if ( ! $post || $post->post_type !== 'bmm_submission' ) {
-			return new \WP_REST_Response( [ 'received' => true ], 200 );
+			return $finish( 'submission_not_found', 200 );
 		}
 
-		// 5. Validate parent is a valid form
+		// 5. Validate parent is a valid form.
 		$parent = get_post( $post->post_parent );
 		if ( ! $parent || $parent->post_type !== 'bmm_reg_form' ) {
-			return new \WP_REST_Response( [ 'received' => true ], 200 );
+			return $finish( 'invalid_form', 200 );
 		}
 
-		// 6. Idempotency: already completed
+		// 6. Idempotency: already completed.
 		if ( $post->post_status === 'completed' ) {
-			return new \WP_REST_Response( [ 'received' => true ], 200 );
+			return $finish( 'already_completed', 200 );
 		}
 
-		// 7. Determine HK vs regular
+		// 7. Determine HK vs regular.
 		$is_hk = ! empty( $payload['KevaId'] ) && empty( $payload['TransactionId'] );
 
 		// 8. Only complete when the callback evidences an actually-approved
-		//    payment. Nedarim posts the CallBack for declined/errored attempts
-		//    too; those must NOT flip the submission to "completed" — they are
-		//    recorded for audit and the submission stays pending (so a later
-		//    successful retry can still complete it).
+		//    payment. Declined/errored attempts are recorded and left pending.
 		if ( ! self::payment_succeeded( $payload ) ) {
 			BMM_Submission::record_failed_attempt( $submission_id, $payload );
-			return new \WP_REST_Response( [ 'received' => true, 'completed' => false ], 200 );
+			return $finish( 'not_approved', 200 );
 		}
 
-		// 9. Complete the submission
+		// 9. Complete the submission.
 		BMM_Submission::complete( $submission_id, $payload, $is_hk );
-
-		return new \WP_REST_Response( [ 'received' => true, 'completed' => true ], 200 );
+		return $finish( 'completed', 200 );
 	}
 
 	/**
@@ -116,9 +137,23 @@ class BMM_Callback_Handler {
 		if ( defined( 'BMM_TRUST_PROXY' ) && BMM_TRUST_PROXY ) {
 			$forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
 			if ( $forwarded ) {
-				return trim( explode( ',', $forwarded )[0] );
+				return self::normalize_ip( explode( ',', $forwarded )[0] );
 			}
 		}
-		return $_SERVER['REMOTE_ADDR'] ?? '';
+		return self::normalize_ip( $_SERVER['REMOTE_ADDR'] ?? '' );
+	}
+
+	/**
+	 * Normalise a remote address so the exact-match IP check is not defeated by
+	 * an IPv4-mapped IPv6 form ("::ffff:18.194.219.73") — a common way a real
+	 * Nedarim callback gets silently rejected, leaving a paid submission pending.
+	 * Pure, so it can be unit-tested.
+	 */
+	public static function normalize_ip( string $ip ): string {
+		$ip = trim( $ip );
+		if ( stripos( $ip, '::ffff:' ) === 0 ) {
+			$ip = substr( $ip, 7 );
+		}
+		return $ip;
 	}
 }

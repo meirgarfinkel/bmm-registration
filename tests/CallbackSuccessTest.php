@@ -59,4 +59,14 @@ final class CallbackSuccessTest extends TestCase {
 	public function test_declined_status_does_not_succeed(): void {
 		$this->assertFalse( BMM_Callback_Handler::payment_succeeded( [ 'Status' => 'Declined' ] ) );
 	}
+
+	// ── IP normalisation (so a real callback is not silently 403'd) ──────────────
+
+	public function test_ipv4_mapped_ipv6_is_normalised_to_ipv4(): void {
+		// A real Nedarim callback can arrive as an IPv4-mapped IPv6 address; the
+		// exact-match IP check must still recognise it.
+		$this->assertSame( '18.194.219.73', BMM_Callback_Handler::normalize_ip( '::ffff:18.194.219.73' ) );
+		$this->assertSame( '18.194.219.73', BMM_Callback_Handler::normalize_ip( '  18.194.219.73  ' ) );
+		$this->assertSame( '18.194.219.73', BMM_Callback_Handler::normalize_ip( '18.194.219.73' ) );
+	}
 }

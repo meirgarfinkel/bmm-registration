@@ -3,7 +3,7 @@
  * Plugin Name: BMM Registration
  * Plugin URI:  https://bmm.org.il
  * Description: Yomim Noraim seat reservations and annual membership registration with Nedarim Plus payment.
- * Version:     1.21.0
+ * Version:     1.22.0
  * Author:      BMM
  * Text Domain: bmm-registration
  * Domain Path: /languages
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'BMM_REG_VERSION', '1.21.0' );
+define( 'BMM_REG_VERSION', '1.22.0' );
 
 // Plugin update checker — checks GitHub for new versions.
 // If the repo is private, define BMM_GITHUB_TOKEN in wp-config.php.
@@ -35,6 +35,7 @@ require_once BMM_REG_DIR . 'includes/class-bmm-settings.php';
 require_once BMM_REG_DIR . 'includes/class-bmm-form-config.php';
 require_once BMM_REG_DIR . 'includes/class-bmm-pricing.php';
 require_once BMM_REG_DIR . 'includes/class-bmm-submission.php';
+require_once BMM_REG_DIR . 'includes/class-bmm-callback-log.php';
 require_once BMM_REG_DIR . 'includes/class-bmm-callback-handler.php';
 require_once BMM_REG_DIR . 'includes/class-bmm-csv-export.php';
 require_once BMM_REG_DIR . 'includes/class-bmm-shortcode.php';
