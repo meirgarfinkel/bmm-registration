@@ -1,6 +1,35 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
 <div class="wrap bmm-submissions-wrap">
-	<h1><?php esc_html_e( 'Submissions', 'bmm-registration' ); ?></h1>
+	<?php
+	$current_form   = isset( $_GET['form_id'] ) ? (int) $_GET['form_id'] : 0;
+	$current_status = ! empty( $_GET['payment_status'] ) ? sanitize_key( wp_unslash( $_GET['payment_status'] ) ) : 'completed';
+	$admin_post     = esc_url( admin_url( 'admin-post.php' ) );
+	?>
+	<h1 class="wp-heading-inline"><?php esc_html_e( 'Submissions', 'bmm-registration' ); ?></h1>
+
+	<?php // Actions, WordPress-native "page-title-action" buttons next to the title. ?>
+	<form method="post" action="<?php echo $admin_post; ?>" class="bmm-title-action">
+		<?php wp_nonce_field( 'bmm_export_csv', 'bmm_export_nonce' ); ?>
+		<input type="hidden" name="action" value="bmm_export_csv">
+		<input type="hidden" name="form_id" value="<?php echo esc_attr( (string) $current_form ); ?>">
+		<input type="hidden" name="status" value="<?php echo esc_attr( $current_status ); ?>">
+		<button type="submit" class="page-title-action"><?php esc_html_e( 'Export CSV', 'bmm-registration' ); ?></button>
+	</form>
+	<form method="post" action="<?php echo $admin_post; ?>" class="bmm-title-action">
+		<?php wp_nonce_field( 'bmm_audit_payments', 'bmm_audit_nonce' ); ?>
+		<input type="hidden" name="action" value="bmm_audit_payments">
+		<button type="submit" class="page-title-action"><?php esc_html_e( 'Audit Payments', 'bmm-registration' ); ?></button>
+	</form>
+	<form method="post" action="<?php echo $admin_post; ?>" class="bmm-title-action"
+		onsubmit="return confirm('<?php echo esc_js( __( 'Mark every unverified completed submission as Failed? Run this after reviewing the flagged rows.', 'bmm-registration' ) ); ?>');">
+		<?php wp_nonce_field( 'bmm_revert_unverified', 'bmm_revert_nonce' ); ?>
+		<input type="hidden" name="action" value="bmm_revert_unverified">
+		<button type="submit" class="page-title-action"><?php esc_html_e( 'Mark Unverified as Failed', 'bmm-registration' ); ?></button>
+	</form>
+	<a href="<?php echo esc_url( admin_url( 'admin.php?page=bmm-reconcile' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Reconcile Payments', 'bmm-registration' ); ?></a>
+
+	<hr class="wp-header-end">
+
 	<?php
 	// Feedback after a bulk action (see BMM_Admin::process_submissions_bulk_action()).
 	if ( isset( $_GET['bmm_bulk'], $_GET['bmm_count'] ) ) :
@@ -72,34 +101,6 @@
 	<?php endif; ?>
 
 	<?php $list_table->views(); ?>
-
-	<?php
-	// Export / Audit toolbar. These are their own POST forms and MUST live
-	// OUTSIDE the list table's <form method="get"> below — nesting forms is
-	// invalid HTML and breaks both these buttons and the bulk-action form.
-	$current_form   = isset( $_GET['form_id'] ) ? (int) $_GET['form_id'] : 0;
-	$current_status = ! empty( $_GET['payment_status'] ) ? sanitize_key( wp_unslash( $_GET['payment_status'] ) ) : 'completed';
-	?>
-	<div class="bmm-submissions-toolbar">
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<?php wp_nonce_field( 'bmm_export_csv', 'bmm_export_nonce' ); ?>
-			<input type="hidden" name="action" value="bmm_export_csv">
-			<input type="hidden" name="form_id" value="<?php echo esc_attr( (string) $current_form ); ?>">
-			<input type="hidden" name="status" value="<?php echo esc_attr( $current_status ); ?>">
-			<?php submit_button( __( 'Export CSV', 'bmm-registration' ), 'secondary', 'export', false ); ?>
-		</form>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<?php wp_nonce_field( 'bmm_audit_payments', 'bmm_audit_nonce' ); ?>
-			<input type="hidden" name="action" value="bmm_audit_payments">
-			<?php submit_button( __( 'Audit Payments', 'bmm-registration' ), 'secondary', 'audit', false ); ?>
-		</form>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
-			onsubmit="return confirm('<?php echo esc_js( __( 'Mark every unverified completed submission as Failed? Run this after reviewing the flagged rows.', 'bmm-registration' ) ); ?>');">
-			<?php wp_nonce_field( 'bmm_revert_unverified', 'bmm_revert_nonce' ); ?>
-			<input type="hidden" name="action" value="bmm_revert_unverified">
-			<?php submit_button( __( 'Mark Unverified as Failed', 'bmm-registration' ), 'delete', 'revert', false ); ?>
-		</form>
-	</div>
 
 	<?php
 	// Seat subtotals across the whole filtered set (all pages).

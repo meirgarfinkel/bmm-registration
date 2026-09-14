@@ -123,3 +123,7 @@
 	color: #b32d2e;
 	font-weight: 700;
 }
+
+/* Submissions action buttons rendered as WP title actions (inline next to H1). */
+.bmm-title-action { display: inline; }
+.bmm-title-action .page-title-action { cursor: pointer; }

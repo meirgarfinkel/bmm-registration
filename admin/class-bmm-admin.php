@@ -51,6 +51,15 @@ class BMM_Admin {
 
 		add_submenu_page(
 			'bmm-registration',
+			__( 'Reconcile Payments', 'bmm-registration' ),
+			__( 'Reconcile Payments', 'bmm-registration' ),
+			'manage_options',
+			'bmm-reconcile',
+			[ self::class, 'render_reconcile_page' ]
+		);
+
+		add_submenu_page(
+			'bmm-registration',
 			__( 'Payment Callbacks', 'bmm-registration' ),
 			__( 'Payment Callbacks', 'bmm-registration' ),
 			'manage_options',
@@ -64,6 +73,120 @@ class BMM_Admin {
 	public static function render_callback_log_page(): void {
 		$entries = BMM_Callback_Log::all();
 		require BMM_REG_DIR . 'admin/views/callback-log-page.php';
+	}
+
+	/**
+	 * Reconcile Payments: pull Nedarim's cleared-transaction history and propose
+	 * matches to pending submissions (confirm-first). Handles both the "find
+	 * matches" and the "complete selected" steps, then hands data to the view.
+	 */
+	public static function render_reconcile_page(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Unauthorized', 'bmm-registration' ) );
+		}
+
+		$mosad        = (string) BMM_Settings::get( 'mosad' );
+		$api_password = (string) BMM_Settings::get( 'api_password' );
+		$error        = '';
+		$matches      = [];
+		$completed    = null;
+		$did_search   = false;
+
+		// Step 2 — complete the confirmed matches.
+		if (
+			isset( $_POST['bmm_reconcile_apply'], $_POST['bmm_reconcile_nonce'] ) &&
+			wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['bmm_reconcile_nonce'] ) ), 'bmm_reconcile' )
+		) {
+			$completed = self::apply_reconcile_matches(
+				(array) ( $_POST['confirm_ids'] ?? [] ),
+				wp_unslash( (array) ( $_POST['txn'] ?? [] ) )
+			);
+		}
+
+		// Step 1 — find matches.
+		if (
+			isset( $_POST['bmm_reconcile_find'], $_POST['bmm_reconcile_nonce'] ) &&
+			wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['bmm_reconcile_nonce'] ) ), 'bmm_reconcile' )
+		) {
+			$did_search   = true;
+			$transactions = BMM_Reconcile::fetch_transactions( $mosad, $api_password );
+			if ( is_wp_error( $transactions ) ) {
+				$error = $transactions->get_error_message();
+			} else {
+				$matches = self::build_reconcile_matches( $transactions );
+			}
+		}
+
+		$has_creds = ( $mosad !== '' && $api_password !== '' );
+		require BMM_REG_DIR . 'admin/views/reconcile-page.php';
+	}
+
+	/** Match currently-pending submissions against the fetched transactions. */
+	private static function build_reconcile_matches( array $transactions ): array {
+		// Exclude transactions already recorded on a completed submission, so a
+		// person's earlier (already-applied) payment isn't proposed again.
+		$used_txn = [];
+		foreach ( get_posts( [ 'post_type' => 'bmm_submission', 'post_status' => 'completed', 'posts_per_page' => -1, 'fields' => 'ids' ] ) as $cid ) {
+			$t = trim( (string) get_post_meta( (int) $cid, '_bmm_sub_nedarim_transaction_id', true ) );
+			if ( $t !== '' ) {
+				$used_txn[ $t ] = true;
+			}
+		}
+		$transactions = array_values( array_filter( $transactions, static function ( $t ) use ( $used_txn ) {
+			$id = trim( (string) ( $t['TransactionId'] ?? '' ) );
+			return $id === '' || ! isset( $used_txn[ $id ] );
+		} ) );
+
+		$pendings = [];
+		foreach ( get_posts( [ 'post_type' => 'bmm_submission', 'post_status' => 'bmm_pending', 'posts_per_page' => -1, 'fields' => 'ids' ] ) as $pid ) {
+			$pid        = (int) $pid;
+			$pendings[] = [
+				'id'    => $pid,
+				'name'  => trim( get_post( $pid )->post_title ),
+				'total' => (int) get_post_meta( $pid, '_bmm_sub_price_total', true ),
+				'phone' => (string) get_post_meta( $pid, '_bmm_sub_phone', true ),
+				'zeout' => (string) get_post_meta( $pid, '_bmm_sub_zeout', true ),
+				'email' => (string) get_post_meta( $pid, '_bmm_sub_email', true ),
+			];
+		}
+
+		$matches = BMM_Reconcile::match( $pendings, $transactions );
+
+		// Attach the pending's display fields for the confirmation table.
+		$by_id = array_column( $pendings, null, 'id' );
+		foreach ( $matches as &$m ) {
+			$m['pending'] = $by_id[ $m['submission_id'] ] ?? [];
+		}
+		return $matches;
+	}
+
+	/**
+	 * Complete the submissions the admin confirmed. Each confirm entry is the
+	 * matched transaction data (submitted from the confirmation table).
+	 */
+	private static function apply_reconcile_matches( array $ids, array $txn_map ): int {
+		$count = 0;
+		foreach ( $ids as $submission_id ) {
+			$submission_id = (int) $submission_id;
+			$txn           = $txn_map[ $submission_id ] ?? null;
+			$post          = $submission_id ? get_post( $submission_id ) : null;
+			if ( ! is_array( $txn ) || ! $post || $post->post_type !== 'bmm_submission' || $post->post_status === 'completed' ) {
+				continue;
+			}
+			$payload = [
+				'TransactionId' => sanitize_text_field( $txn['txn_id'] ?? '' ),
+				'Confirmation'  => sanitize_text_field( $txn['confirmation'] ?? '' ),
+				'LastNum'       => sanitize_text_field( $txn['last4'] ?? '' ),
+				'Amount'        => sanitize_text_field( $txn['amount'] ?? '' ),
+			];
+			if ( $payload['TransactionId'] === '' ) {
+				continue; // never complete without a real transaction id
+			}
+			BMM_Submission::complete( $submission_id, $payload, false );
+			update_post_meta( $submission_id, '_bmm_sub_reconciled', 1 );
+			$count++;
+		}
+		return $count;
 	}
 
 	/**
