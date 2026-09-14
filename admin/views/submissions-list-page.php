@@ -71,6 +71,8 @@
 		?></p></div>
 	<?php endif; ?>
 
+	<?php $list_table->views(); ?>
+
 	<?php
 	// Export / Audit toolbar. These are their own POST forms and MUST live
 	// OUTSIDE the list table's <form method="get"> below — nesting forms is

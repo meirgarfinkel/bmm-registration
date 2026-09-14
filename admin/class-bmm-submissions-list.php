@@ -59,6 +59,70 @@ class BMM_Submissions_List extends \WP_List_Table {
 		'women_yk' => [ 'women', 'yk' ],
 	];
 
+	/**
+	 * Status tabs with counts (WordPress "views"), so Pending is always visible
+	 * and never overlooked. Counts respect the active form filter.
+	 */
+	protected function get_views(): array {
+		$form_filter = isset( $_GET['form_id'] ) ? (int) $_GET['form_id'] : 0;
+		$current     = ! empty( $_GET['payment_status'] ) ? sanitize_key( $_GET['payment_status'] ) : 'completed';
+
+		$base_url = admin_url( 'admin.php?page=bmm-submissions' );
+		if ( $form_filter ) {
+			$base_url = add_query_arg( 'form_id', $form_filter, $base_url );
+		}
+
+		$labels = [
+			'all'         => __( 'All', 'bmm-registration' ),
+			'bmm_pending' => __( 'Pending', 'bmm-registration' ),
+			'completed'   => __( 'Completed', 'bmm-registration' ),
+			'failed'      => __( 'Failed', 'bmm-registration' ),
+			'unverified'  => __( 'Completed — unverified', 'bmm-registration' ),
+		];
+
+		$views = [];
+		foreach ( $labels as $status => $label ) {
+			$count = $this->count_for_status( $status, $form_filter );
+
+			// Only surface the audit-only "unverified" tab when there is
+			// something flagged to review.
+			if ( $status === 'unverified' && $count === 0 ) {
+				continue;
+			}
+
+			$url     = add_query_arg( 'payment_status', $status, $base_url );
+			$classes = [];
+			if ( $current === $status ) {
+				$classes[] = 'current';
+			}
+			// Draw the eye to Pending / Unverified when they are non-empty.
+			$count_class = ( in_array( $status, [ 'bmm_pending', 'unverified' ], true ) && $count > 0 ) ? ' bmm-count-alert' : '';
+
+			$views[ $status ] = sprintf(
+				'<a href="%s"%s>%s <span class="count%s">(%d)</span></a>',
+				esc_url( $url ),
+				$classes ? ' class="' . esc_attr( implode( ' ', $classes ) ) . '"' : '',
+				esc_html( $label ),
+				esc_attr( $count_class ),
+				$count
+			);
+		}
+
+		return $views;
+	}
+
+	/** Count submissions matching a status filter (+ optional form filter). */
+	private function count_for_status( string $status, int $form_filter ): int {
+		$args = array_merge(
+			[ 'post_type' => 'bmm_submission', 'posts_per_page' => 1, 'fields' => 'ids' ],
+			BMM_Submission::resolve_list_status( $status )
+		);
+		if ( $form_filter ) {
+			$args['post_parent'] = $form_filter;
+		}
+		return (int) ( new \WP_Query( $args ) )->found_posts;
+	}
+
 	protected function get_bulk_actions(): array {
 		return [
 			'mark_completed' => __( 'Mark as Completed', 'bmm-registration' ),
