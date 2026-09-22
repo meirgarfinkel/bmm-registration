@@ -127,3 +127,11 @@
 /* Submissions action buttons rendered as WP title actions (inline next to H1). */
 .bmm-title-action { display: inline; }
 .bmm-title-action .page-title-action { cursor: pointer; }
+
+/* Overall amount total in the submissions totals bar. */
+.bmm-seat-totals__amount {
+	margin-left: auto;
+	padding-left: 14px;
+	border-left: 1px solid #c3d7ea;
+	font-size: 14px;
+}

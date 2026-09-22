@@ -118,6 +118,7 @@
 		<span class="bmm-seat-totals__item"><?php esc_html_e( "Women's (RH)", 'bmm-registration' ); ?>: <strong><?php echo (int) $seat_totals['women_rh']; ?></strong></span>
 		<span class="bmm-seat-totals__item"><?php esc_html_e( "Men's (YK)", 'bmm-registration' ); ?>: <strong><?php echo (int) $seat_totals['men_yk']; ?></strong></span>
 		<span class="bmm-seat-totals__item"><?php esc_html_e( "Women's (YK)", 'bmm-registration' ); ?>: <strong><?php echo (int) $seat_totals['women_yk']; ?></strong></span>
+		<span class="bmm-seat-totals__item bmm-seat-totals__amount"><?php esc_html_e( 'Amount total', 'bmm-registration' ); ?>: <strong>₪<?php echo (int) $list_table->amount_total; ?></strong></span>
 	</div>
 
 	<form method="get">

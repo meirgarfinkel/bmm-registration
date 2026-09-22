@@ -13,6 +13,9 @@ class BMM_Submissions_List extends \WP_List_Table {
 	/** Number of submissions matching the current filter (all pages). */
 	public int $total_matching = 0;
 
+	/** Sum of the locked totals across the full filtered set (all pages). */
+	public int $amount_total = 0;
+
 	public function __construct() {
 		parent::__construct( [
 			'singular' => 'submission',
@@ -221,17 +224,21 @@ class BMM_Submissions_List extends \WP_List_Table {
 		$args['fields']         = 'ids';
 		unset( $args['offset'] );
 
-		$ids  = get_posts( $args );
-		$rows = [];
+		$ids    = get_posts( $args );
+		$rows   = [];
+		$amount = 0;
 		foreach ( $ids as $id ) {
+			$id     = (int) $id;
 			$rows[] = [
-				'men'   => $this->seats_meta( (int) $id, 'men' ),
-				'women' => $this->seats_meta( (int) $id, 'women' ),
+				'men'   => $this->seats_meta( $id, 'men' ),
+				'women' => $this->seats_meta( $id, 'women' ),
 			];
+			$amount += (int) get_post_meta( $id, '_bmm_sub_price_total', true );
 		}
 
 		$this->seat_totals    = BMM_Pricing::sum_seat_totals( $rows );
 		$this->total_matching = count( $ids );
+		$this->amount_total   = $amount;
 	}
 
 	public function column_default( $item, $column_name ): string {
